@@ -1,0 +1,7 @@
+inventori/
+jualan/
+*.xlsx
+*.pdf
+*.bak
+__pycache__/
+serve.mjs

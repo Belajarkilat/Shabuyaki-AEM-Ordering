@@ -1,0 +1,1607 @@
+<title>Sheet Order AEM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<script>
+/* tema dipasang sebelum halaman dilukis supaya tiada kelipan putih */
+(function(){
+  var t="gelap";
+  try{ t=localStorage.getItem("aem-tema")||"gelap"; }catch(_){}
+  document.documentElement.setAttribute("data-theme", t==="terang"?"light":"dark");
+})();
+</script>
+<style>
+:root{
+  --paper:#F5F2EC; --surface:#FFFFFF; --surface-2:#FBF8F3; --sunk:#EFEAE1;
+  --ink:#1A1C1E; --ink-2:#5D584F; --ink-3:#8B857A;
+  --line:#E3DDD2; --line-2:#CDC5B6;
+  --accent:#1F4A6B; --accent-ink:#1F4A6B; --accent-soft:#E8EFF4; --on-accent:#FFFFFF;
+  --over:#A63A29; --over-soft:#F7E8E4;
+  --ok:#3B6A4C; --ok-soft:#E7EFE9;
+  --warn:#8A6717; --warn-soft:#F6EEDB;
+  --shadow:0 1px 2px rgba(40,32,20,.06), 0 6px 18px rgba(40,32,20,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#141619; --surface:#1C1F23; --surface-2:#22262B; --sunk:#101215;
+    --ink:#EDE9E1; --ink-2:#A7A199; --ink-3:#7B766D;
+    --line:#2E333A; --line-2:#3E444C;
+    --accent:#7EB2D8; --accent-ink:#A9CDEA; --accent-soft:#1B2A36; --on-accent:#0F1418;
+    --over:#E58A74; --over-soft:#38221D;
+    --ok:#8FC29D; --ok-soft:#1E2E24;
+    --warn:#D8B45F; --warn-soft:#2E2716;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141619; --surface:#1C1F23; --surface-2:#22262B; --sunk:#101215;
+  --ink:#EDE9E1; --ink-2:#A7A199; --ink-3:#7B766D;
+  --line:#2E333A; --line-2:#3E444C;
+  --accent:#7EB2D8; --accent-ink:#A9CDEA; --accent-soft:#1B2A36; --on-accent:#0F1418;
+  --over:#E58A74; --over-soft:#38221D;
+  --ok:#8FC29D; --ok-soft:#1E2E24;
+  --warn:#D8B45F; --warn-soft:#2E2716;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
+}
+
+*{box-sizing:border-box}
+/* mesti mengatasi display:grid dan display:flex pada elemen yang disembunyikan */
+[hidden]{display:none!important}
+body{background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  font-size:15px; line-height:1.5; -webkit-text-size-adjust:100%}
+.wrap{max-width:1140px; margin:0 auto; padding:0 20px 64px}
+h1,h2,h3{font-family:"Archivo","Segoe UI",system-ui,sans-serif; margin:0; text-wrap:balance}
+.num{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+
+.top{border-bottom:1px solid var(--line); background:var(--surface)}
+.top-in{max-width:1140px; margin:0 auto; padding:12px 20px; display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 12px}
+h1{font-size:19px; font-weight:700; letter-spacing:-.02em}
+.outlet{font-size:11px; letter-spacing:.13em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+.conn{margin-left:auto; display:flex; align-items:center; gap:7px; font-size:12px; color:var(--ink-3); white-space:nowrap}
+.dot{width:7px; height:7px; border-radius:50%; background:var(--ink-3); flex:none}
+.dot.on{background:var(--ok)}
+.tema{margin-left:6px; border:1px solid var(--line-2); background:var(--surface-2); color:var(--ink-2);
+  font-family:inherit; font-size:11.5px; height:26px; padding:0 10px; border-radius:999px; cursor:pointer}
+.tema:hover{border-color:var(--accent); color:var(--accent-ink)}
+
+.controls{position:sticky; top:0; z-index:20; background:var(--surface); border-bottom:1px solid var(--line); box-shadow:var(--shadow)}
+.controls-in{max-width:1140px; margin:0 auto; padding:10px 20px}
+.bar{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px}
+.cycles{display:flex; gap:5px; flex-wrap:wrap}
+.cycle{border:1px solid var(--line-2); background:var(--surface-2); color:var(--ink-2); border-radius:999px;
+  padding:0 13px; height:34px; display:flex; align-items:center; gap:7px; cursor:pointer;
+  font-family:inherit; font-size:13.5px; transition:background .12s,border-color .12s,color .12s}
+.cycle b{font-family:"Archivo",sans-serif; font-weight:600; color:var(--ink)}
+.cycle i{font-style:normal; font-size:11px; font-family:"IBM Plex Mono",monospace; color:var(--ink-3);
+  background:var(--sunk); border-radius:999px; padding:1px 6px}
+.cycle:hover{border-color:var(--accent)}
+.cycle[aria-pressed="true"]{background:var(--accent-soft); border-color:var(--accent)}
+.cycle[aria-pressed="true"] b{color:var(--accent-ink)}
+.cycle[aria-pressed="true"] i{color:var(--accent-ink); background:rgba(127,127,127,.18)}
+
+.lanjut{display:flex; flex-wrap:wrap; gap:10px 22px; align-items:flex-end; margin-top:11px;
+  padding-top:11px; border-top:1px solid var(--line)}
+.knob{display:flex; flex-direction:column; gap:4px}
+.knob label{font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+.hint{font-size:11.5px; color:var(--ink-3); margin:0 0 3px}
+.field{display:flex; align-items:center; gap:6px; border:1px solid var(--line-2); border-radius:3px; background:var(--surface-2); padding:0 9px; height:34px}
+.field span{color:var(--ink-3); font-size:12.5px}
+.field input{border:0; background:transparent; color:var(--ink); font-family:"IBM Plex Mono",monospace;
+  font-variant-numeric:tabular-nums; font-size:14px; width:86px; padding:0; outline:none}
+.field:focus-within{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+.seg{display:flex; border:1px solid var(--line-2); border-radius:3px; overflow:hidden; height:36px}
+.seg button{border:0; background:var(--surface-2); color:var(--ink-2); font-family:inherit; font-size:13px; padding:0 13px; cursor:pointer; white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line-2)}
+.seg button[aria-pressed="true"]{background:var(--accent); color:var(--on-accent)}
+.amaran{border:1px solid var(--over); background:var(--over-soft); color:var(--over); font-family:inherit;
+  font-size:12px; height:34px; padding:0 12px; border-radius:3px; cursor:pointer; white-space:nowrap}
+.amaran:hover{background:var(--over); color:var(--paper)}
+.acts{margin-left:auto; display:flex; gap:8px; flex-wrap:wrap}
+.btn{border:1px solid var(--line-2); background:var(--surface-2); color:var(--ink); font-family:inherit;
+  font-size:13px; height:34px; padding:0 13px; border-radius:3px; cursor:pointer}
+.btn[aria-pressed="true"]{background:var(--accent-soft); border-color:var(--accent); color:var(--accent-ink)}
+.seg.kecil{height:26px; align-items:center}
+.seg.kecil button{height:24px; font-size:11.5px; padding:0 9px}
+.seg.kecil .lbl{display:flex; align-items:center; padding:0 8px; height:24px; background:var(--surface-2);
+  border-right:1px solid var(--line-2); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--ink-3); font-weight:600}
+.btn:hover{border-color:var(--accent); color:var(--accent-ink)}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
+.btn.primary:hover{color:var(--on-accent); opacity:.9}
+.btn.kecil{height:28px; padding:0 10px; font-size:12px}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+.summary{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:4px; overflow:hidden; margin:22px 0 8px}
+.tile{background:var(--surface); padding:14px 16px}
+.tile .k{font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+.tile .v{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-size:24px; font-weight:500; letter-spacing:-.02em; margin-top:5px; line-height:1.1}
+.tile .s{font-size:12px; color:var(--ink-3); margin-top:3px}
+.tile.flag-over .v{color:var(--over)}
+.tile.flag-ok .v{color:var(--ok)}
+.note{font-size:12.5px; color:var(--ink-3); margin:0 0 18px; max-width:82ch}
+.harga-baris{font-size:13px; color:var(--ink-2); margin:-8px 0 18px; max-width:84ch;
+  background:var(--warn-soft); border-left:3px solid var(--warn); padding:10px 13px; border-radius:0 3px 3px 0}
+.harga-baris b{color:var(--ink)}
+.harga-baris .naik{color:var(--over); font-weight:600}
+.harga-baris .turun{color:var(--ok); font-weight:600}
+.pautan{border:0; background:none; padding:0; color:var(--accent-ink); font-family:inherit; font-size:13px; cursor:pointer; text-decoration:underline}
+
+/* ---- gerbang PIN ---- */
+#gate{position:fixed; inset:0; z-index:80; display:grid; place-items:center; background:var(--paper); padding:24px}
+#gate[hidden]{display:none}
+.gate-kad{width:100%; max-width:330px; background:var(--surface); border:1px solid var(--line);
+  border-radius:6px; padding:26px 24px; box-shadow:var(--shadow); text-align:center}
+.gate-kad h2{font-family:"Archivo",sans-serif; font-size:19px; font-weight:600; letter-spacing:-.01em}
+.gate-kad p{font-size:13px; color:var(--ink-3); margin:9px 0 18px; line-height:1.5}
+#gate-pin{width:100%; height:52px; border:1px solid var(--line-2); border-radius:4px;
+  background:var(--surface-2); color:var(--ink); font-family:"IBM Plex Mono",monospace;
+  font-size:28px; letter-spacing:.5em; text-indent:.5em; text-align:center; outline:none; margin-bottom:12px}
+#gate-pin:focus{border-color:var(--accent); background:var(--surface); box-shadow:0 0 0 3px var(--accent-soft)}
+#gate-hantar{width:100%; height:42px; font-size:14px}
+.gate-pesan{min-height:18px; font-size:12.5px; color:var(--over); margin:12px 0 6px}
+
+/* ---- panel pembekal ---- */
+.pemb{background:var(--surface); border:1px solid var(--line); border-radius:4px; margin-bottom:18px; overflow:hidden}
+.pemb-head{display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--line); background:var(--surface-2)}
+.pemb-head h2{font-size:15px; font-weight:600}
+.pemb-head p{margin:0; font-size:12px; color:var(--ink-3); max-width:52ch}
+.pemb-head .acts{margin-left:auto}
+.pemb-row{display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; padding:10px 16px; border-bottom:1px solid var(--line)}
+.pemb-row:last-child{border-bottom:0}
+.pemb-row input.nama{flex:1 1 190px; min-width:150px; height:32px; border:1px solid var(--line-2); border-radius:3px;
+  background:var(--surface-2); color:var(--ink); font-family:inherit; font-size:14px; padding:0 9px; outline:none}
+.pemb-row input.nama:focus{border-color:var(--accent); background:var(--surface)}
+.pemb-row .kira{font-size:12px; color:var(--ink-3); white-space:nowrap; min-width:132px}
+.pemb-row .kira b{font-family:"IBM Plex Mono",monospace; color:var(--ink-2); font-weight:500}
+
+/* ---- halaman pilih ---- */
+.minggu{background:var(--surface); border:1px solid var(--line); border-radius:5px; padding:14px 16px; margin-top:22px}
+.minggu-atas{display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 12px}
+.minggu-atas h2{font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+.minggu-atas .jum{margin-left:auto; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums;
+  font-size:19px; font-weight:500}
+.minggu-atas .sisa{font-size:12px; color:var(--ink-3); font-family:"IBM Plex Mono",monospace}
+.minggu .bar{height:7px; background:var(--sunk); border-radius:999px; position:relative; overflow:hidden; margin:10px 0 0}
+.minggu .bar i{position:absolute; inset:0 auto 0 0; background:var(--ok); border-radius:999px}
+.minggu .bar.lebih i{background:var(--over)}
+.minggu-senarai{display:flex; flex-wrap:wrap; gap:6px; margin-top:11px}
+.rekod{display:inline-flex; align-items:baseline; gap:7px; font-size:12px; background:var(--surface-2);
+  border:1px solid var(--line); border-radius:999px; padding:3px 11px; color:var(--ink-2)}
+.rekod b{font-weight:600; color:var(--ink)}
+.rekod span{font-family:"IBM Plex Mono",monospace; color:var(--ink-3)}
+.minggu-kosong{font-size:12.5px; color:var(--ink-3); margin:8px 0 0}
+.pilih-tajuk{font-size:17px; font-weight:600; letter-spacing:-.01em; margin:26px 0 14px}
+.pilih-tajuk span{color:var(--ink-3); font-weight:400; font-family:"IBM Plex Sans",sans-serif; font-size:14px}
+/* halaman depan dikosongkan supaya cuma ada satu keputusan untuk dibuat */
+body[data-papar="pilih"] #summary,
+body[data-papar="pilih"] #note,
+body[data-papar="pilih"] #harga-baris,
+body[data-papar="pilih"] .send,
+body[data-papar="pilih"] #knob-mod,
+body[data-papar="pilih"] #btn-kosong,
+body[data-papar="pilih"] #btn-cetak,
+body[data-papar="pilih"] #btn-simpan,
+body[data-papar="pilih"] .foot{display:none!important}
+.pilih{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; margin-bottom:8px}
+.kad{position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:flex-start; gap:0;
+  text-align:left; background:var(--surface); border:1px solid var(--line-2); border-radius:6px;
+  padding:20px 18px 16px; cursor:pointer; font-family:inherit; color:var(--ink);
+  transition:border-color .12s, transform .12s, box-shadow .12s}
+.kad::before{content:""; position:absolute; inset:0 0 auto 0; height:4px; background:var(--c)}
+.kad:hover{border-color:var(--c); transform:translateY(-2px); box-shadow:0 6px 20px rgba(var(--crgb),.18)}
+.ico-bulat{width:46px; height:46px; border-radius:50%; display:grid; place-items:center;
+  background:rgba(var(--crgb),.16); margin-bottom:13px}
+.kad .ico{width:25px; height:25px; margin:0; color:var(--c)}
+.kad-nama{font-family:"Archivo",sans-serif; font-size:19px; font-weight:600; letter-spacing:-.01em; line-height:1.2}
+.kad-status{margin-top:8px; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; font-weight:600;
+  padding:3px 9px; border-radius:999px; background:var(--sunk); color:var(--ink-3)}
+.kad-status.ada{background:rgba(var(--crgb),.18); color:var(--c)}
+.kad-rm{margin-top:15px; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums;
+  font-size:27px; font-weight:500; letter-spacing:-.02em; line-height:1.1}
+.kad-delta{margin-top:4px; font-size:12px; font-family:"IBM Plex Mono",monospace}
+.kad-delta.lebih{color:var(--over)}
+.kad-delta.cukup{color:var(--ok)}
+.kad-sub{margin-top:9px; padding-top:9px; border-top:1px solid var(--line); width:100%;
+  font-size:12px; color:var(--ink-3)}
+.kad-sub b{font-family:"IBM Plex Mono",monospace; font-weight:500; color:var(--ink-2)}
+.kad.rehat{opacity:.62}
+.kad.rehat::before{background:var(--line-2)}
+.kad.rehat .ico{color:var(--ink-3)}
+.kad.rehat .ico-bulat{background:var(--sunk)}
+
+.kad-tambah{align-items:center; justify-content:center; text-align:center; border-style:dashed;
+  background:transparent; color:var(--ink-3); min-height:150px}
+.kad-tambah::before{display:none}
+.kad-tambah .tanda{font-family:"Archivo",sans-serif; font-size:28px; line-height:1; color:var(--ink-3); margin-bottom:8px}
+.kad-tambah .kad-nama{font-size:15px; color:var(--ink-2)}
+.kad-tambah .kad-sub{border:0; padding:0; margin-top:5px}
+.kad-tambah:hover{border-color:var(--accent); color:var(--accent-ink); transform:none; box-shadow:none}
+.kad-tambah:hover .tanda,.kad-tambah:hover .kad-nama{color:var(--accent-ink)}
+
+.balik{display:flex; align-items:center; gap:12px; margin-bottom:14px}
+.balik button{border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2); font-family:inherit;
+  font-size:13px; height:34px; padding:0 14px; border-radius:3px; cursor:pointer}
+.balik button:hover{border-color:var(--accent); color:var(--accent-ink)}
+.balik .kini{font-family:"Archivo",sans-serif; font-weight:600; font-size:14px}
+.balik .kini span{color:var(--ink-3); font-weight:400; font-family:"IBM Plex Sans",sans-serif}
+
+.slots{flex-basis:100%; display:flex; flex-wrap:wrap; gap:8px; padding-left:2px}
+.slot{display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--ink-3);
+  background:var(--surface-2); border:1px solid var(--line); border-radius:3px; padding:3px 8px}
+.slot select{border:0; background:transparent; color:var(--ink); font-family:inherit; font-size:12px;
+  padding:0 2px; outline:none; cursor:pointer}
+.slot i{font-style:normal; color:var(--warn); font-size:11px}
+.day sub{font-size:8px; vertical-align:baseline}
+.cat{background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--c);
+  border-radius:4px; margin-bottom:14px; overflow:hidden}
+.cat.rehat{opacity:.62; border-top-color:var(--line-2)}
+.cat-head{display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; padding:12px 16px;
+  border-bottom:1px solid var(--line); background:linear-gradient(to right, rgba(var(--crgb),.10), rgba(var(--crgb),.02))}
+.cat.rehat .cat-head{border-bottom:0}
+.cat-head h2{font-size:16px; font-weight:600; letter-spacing:-.01em}
+.cat-name{display:flex; align-items:center; gap:9px}
+.ico{width:21px; height:21px; flex:none; fill:none; stroke:currentColor; stroke-width:1.4;
+  stroke-linecap:round; stroke-linejoin:round; color:var(--c, var(--accent-ink))}
+.cat.rehat .ico{color:var(--ink-3)}
+.days{display:flex; align-items:center; gap:6px}
+.days .lbl{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+.day{width:28px; height:26px; border:1px solid var(--line-2); background:var(--surface); color:var(--ink-3);
+  border-radius:3px; font-family:"Archivo",sans-serif; font-size:12px; font-weight:600; cursor:pointer; padding:0}
+.day[aria-pressed="true"]{background:var(--ink); border-color:var(--ink); color:var(--paper)}
+.day:hover{border-color:var(--accent)}
+.cat-buf{display:flex; align-items:center; gap:5px; font-size:12px; color:var(--ink-3)}
+.cat-buf input{width:46px; height:26px; border:1px solid var(--line-2); border-radius:3px; background:var(--surface);
+  color:var(--ink); font-family:"IBM Plex Mono",monospace; font-size:12.5px; text-align:right; padding:0 5px; outline:none}
+.cat-buf input:focus{border-color:var(--accent)}
+.sumber{font-size:11.5px; color:var(--ink-3)}
+.cat-fig{margin-left:auto; display:flex; align-items:center; gap:18px}
+.rm-blok{text-align:right}
+.rm-blok .rm{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-size:17px; font-weight:500; line-height:1.15}
+.rm-blok .rm-sub{font-size:11px; color:var(--ink-3); font-family:"IBM Plex Mono",monospace}
+.rehat-txt{margin-left:auto; font-size:12.5px; color:var(--ink-3)}
+.gauge{width:150px}
+.gauge .bar{height:6px; background:var(--sunk); border-radius:999px; position:relative; overflow:hidden}
+.gauge .fill{position:absolute; inset:0 auto 0 0; background:var(--c, var(--accent)); border-radius:999px}
+.gauge.over .fill{background:var(--over)}
+.gauge .cap{font-size:11px; color:var(--ink-3); margin-top:4px; display:flex; justify-content:space-between; gap:8px; white-space:nowrap}
+.gauge .cap b{font-weight:600; color:var(--ok); font-family:"IBM Plex Mono",monospace}
+.gauge.over .cap b{color:var(--over)}
+
+.scroller{overflow-x:auto}
+table{width:100%; border-collapse:collapse; font-size:13.5px}
+th{text-align:right; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3);
+  font-weight:600; padding:9px 10px; border-bottom:1px solid var(--line); white-space:nowrap; background:var(--surface)}
+th.l{text-align:left}
+td{padding:7px 10px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap}
+td.l{text-align:left; white-space:normal; min-width:200px}
+.item-n{display:block; line-height:1.3}
+.badges{display:flex; flex-wrap:wrap; gap:5px; margin-top:3px}
+.badge{font-size:10px; letter-spacing:.04em; text-transform:uppercase; font-weight:600; padding:1px 6px; border-radius:2px}
+.badge.w{background:var(--warn-soft); color:var(--warn)}
+.badge.q{background:var(--over-soft); color:var(--over)}
+.badge.d{background:var(--sunk); color:var(--ink-3)}
+.badge.h{background:var(--warn-soft); color:var(--warn)}
+select.pilih{margin-top:4px; max-width:100%; height:24px; border:1px solid transparent; border-radius:3px;
+  background:var(--sunk); color:var(--ink-3); font-family:inherit; font-size:11.5px; padding:0 4px; cursor:pointer}
+select.pilih:hover{border-color:var(--line-2); color:var(--ink-2)}
+select.pilih:focus{border-color:var(--accent); background:var(--surface); color:var(--ink)}
+td.unit{color:var(--ink-3); font-size:12px}
+td.n{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
+td.need{color:var(--ink-2)}
+td.order{font-weight:600; font-size:15px}
+td.order.zero{color:var(--ink-3); font-weight:400}
+td.order{padding-top:5px; padding-bottom:5px}
+td.order .ikut{display:block; font-size:10.5px; font-weight:400; color:var(--ink-3); margin-top:2px; text-align:right}
+.badge.c{background:var(--accent-soft); color:var(--accent-ink)}
+td.rm{color:var(--ink-2)}
+tr.cukup{background:var(--ok-soft)}
+tr.sub td{background:rgba(var(--crgb),.11); border-top:1px solid var(--line-2);
+  border-bottom:1px solid rgba(var(--crgb),.35); border-left:3px solid var(--c);
+  padding:8px 10px; text-align:left}
+.sub-in{display:flex; align-items:center; gap:8px; font-family:"Archivo",sans-serif; font-weight:600;
+  font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--c)}
+.sub-in .ico{width:16px; height:16px; color:var(--c)}
+.sub-rm{margin-left:auto; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums;
+  font-size:12px; color:var(--ink-3); text-transform:none; letter-spacing:0; font-weight:400}
+input.stok{width:78px; height:32px; border:1px solid var(--line-2); border-radius:3px; background:var(--surface-2);
+  color:var(--ink); font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums;
+  font-size:14px; text-align:right; padding:0 8px; outline:none}
+input.stok:focus{border-color:var(--accent); background:var(--surface); box-shadow:0 0 0 3px var(--accent-soft)}
+input.harga{width:70px; height:30px; border:1px dashed var(--line-2); border-radius:3px; background:transparent;
+  color:var(--ink-2); font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums;
+  font-size:13px; text-align:right; padding:0 7px; outline:none}
+input.harga::placeholder{color:var(--ink-3)}
+input.harga.ubah{border-style:solid; border-color:var(--warn); color:var(--ink); background:var(--warn-soft)}
+input.harga:focus{border-style:solid; border-color:var(--accent); background:var(--surface); box-shadow:0 0 0 3px var(--accent-soft)}
+tfoot td{background:var(--surface-2); font-weight:600; border-top:1px solid var(--line-2); border-bottom:0}
+
+.send{background:var(--surface); border:1px solid var(--line); border-radius:4px; margin-top:26px; overflow:hidden}
+.send-head{padding:13px 16px; border-bottom:1px solid var(--line); background:var(--surface-2); display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+.send-head h2{font-size:15px; font-weight:600}
+pre.out{margin:0; padding:16px; font-family:"IBM Plex Mono",monospace; font-size:12.5px; line-height:1.6;
+  white-space:pre-wrap; word-break:break-word; max-height:360px; overflow:auto; color:var(--ink-2)}
+.toast{font-size:12.5px; color:var(--ok)}
+
+.foot{margin-top:34px; border-top:1px solid var(--line); padding-top:20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(255px,1fr)); gap:22px}
+.foot h3{font-size:12px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); font-weight:600; margin-bottom:7px}
+.foot p{margin:0 0 9px; font-size:13px; color:var(--ink-2); max-width:56ch}
+.foot p:last-child{margin-bottom:0}
+.foot .num{color:var(--ink)}
+
+@media (max-width:860px){
+  .cycles{grid-template-columns:repeat(2,1fr)}
+  .summary{grid-template-columns:repeat(2,1fr)}
+  .acts{margin-left:0; width:100%}
+  th.hide-s,td.hide-s{display:none}
+  .cat-fig{margin-left:0; width:100%}
+  .gauge{flex:1}
+}
+@media (max-width:560px){
+  h1{font-size:22px}
+  .wrap{padding:0 13px 48px}
+  .top-in,.controls-in{padding-left:13px; padding-right:13px}
+  th.hide-xs,td.hide-xs{display:none}
+  td.l{min-width:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+@media print{
+  .controls,.send,.conn,.acts,.cat.rehat,.pemb,.balik,select.pilih{display:none!important}
+  .pilih{display:grid!important; grid-template-columns:repeat(3,1fr)}
+  .kad{border-color:#999}
+  body{background:#fff; color:#000; font-size:11px}
+  .cat{border-color:#999}
+  .cat-head{background:#fff}
+  tr{break-inside:avoid}
+  .summary{border-color:#999}
+  input.stok{border:1px solid #999; background:#fff}
+  .day,.cat-buf input{border-color:#999}
+}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <h1>Sheet Order AEM</h1><span class="outlet">Aeon Maluri</span>
+    <div class="conn">
+      <span class="dot" id="dot"></span><span id="conn-txt">Menyambung&hellip;</span>
+      <button class="tema" id="btn-tema" type="button">Terang</button>
+    </div>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="controls-in">
+    <div class="bar">
+      <div class="cycles" id="cycles"></div>
+      <label class="field" title="Jangkaan jualan bersih seminggu">
+        <span>RM</span><input id="jualan" type="text" inputmode="numeric" value="100,000">
+      </label>
+      <button class="amaran" id="btn-purata" type="button" hidden></button>
+      <div class="acts">
+        <button class="btn" id="btn-tetapan" aria-pressed="false">Tetapan</button>
+        <button class="btn" id="btn-kosong">Kosongkan stok</button>
+        <button class="btn" id="btn-cetak">Cetak</button>
+        <button class="btn primary" id="btn-simpan">Simpan salinan</button>
+      </div>
+    </div>
+    <div class="lanjut" id="lanjut" hidden>
+      <div class="knob">
+        <label>Susun ikut</label>
+        <div class="seg">
+          <button id="susun-pembekal" aria-pressed="true">Supplier</button>
+          <button id="susun-kategori" aria-pressed="false">Kategori</button>
+        </div>
+      </div>
+      <div class="knob" id="knob-mod">
+        <label>Kuantiti ikut</label>
+        <div class="seg">
+          <button id="mod-guna" aria-pressed="true">Guna sebenar</button>
+          <button id="mod-bajet" aria-pressed="false">Bajet 53%</button>
+        </div>
+      </div>
+      <p class="hint" id="mod-hint">Order penuh ikut apa yang dapur betul-betul guna</p>
+      <p class="hint" id="susun-hint">Jualan 4 minggu lepas RM99,557</p>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <section class="summary" id="summary"></section>
+  <p class="note" id="note"></p>
+  <p class="harga-baris" id="harga-baris" hidden></p>
+
+  <section class="pemb" id="pemb" hidden>
+    <div class="pemb-head">
+      <div><h2>Supplier</h2>
+        <p>Tukar nama dan hari order di sini. Setiap item boleh dipindah ke supplier lain daripada senarai di bawahnya.</p></div>
+      <div class="acts"><button class="btn kecil" id="btn-tambah">Tambah supplier</button></div>
+    </div>
+    <div id="pemb-list"></div>
+  </section>
+
+  <section class="minggu" id="minggu" hidden></section>
+  <h2 class="pilih-tajuk" id="pilih-tajuk" hidden></h2>
+  <section class="pilih" id="pilih" hidden></section>
+  <div class="balik" id="balik" hidden></div>
+  <div id="cats"></div>
+
+  <section class="send">
+    <div class="send-head">
+      <h2>Senarai untuk dihantar</h2>
+      <span class="toast" id="toast"></span>
+      <div class="acts"><button class="btn" id="btn-salin">Salin teks</button></div>
+    </div>
+    <pre class="out" id="out"></pre>
+  </section>
+
+  <section class="foot">
+    <div>
+      <h3>Supplier, bukan kategori</h3>
+      <p>Empat supplier dipasang. <b>Central Kitchen</b> bawa protein, sushi bar, sos, frozen food, seasoning, soup base dan noodle. <b>Nature Farm</b> bawa sayur. <b>Beacon Chicken</b> bawa ayam dan seaweed kering, hari order sama dengan Nature Farm. <b>Yummy Joy</b> datang sekali seminggu pada hari Isnin. Beverage Bar datang daripada Central Kitchen, bukan Yummy Joy.</p>
+      <p>Setiap kategori sudah dipetakan kepada supplier sebenar. Chuka Wakame kekal di bawah Central Kitchen kerana ia salad siap, bukan seaweed kering seperti tiga rekod Dried Seaweed yang dipindah ke Beacon Chicken. Mana-mana item boleh dipindah melalui senarai kecil bawah namanya.</p>
+    </div>
+    <div>
+      <h3>Kenapa buffer berbeza</h3>
+      <p>Daripada 341 hari jualan, order Jumaat paling mudah diramal walaupun ia tahan tiga hari, ia perlu <span class="num">+9%</span> untuk betul 8 daripada 10 minggu. Order Isnin perlu <span class="num">+16%</span>, order Rabu <span class="num">+14%</span>, dan order sekali seminggu <span class="num">+14%</span>.</p>
+      <p>Lalai diturunkan bagi barang segar dan mahal, dinaikkan bagi barang kering. Kehabisan sos menutup satu menu semalaman dan hampir tiada kos simpan. Terlebih order brisket ialah duit mati dalam peti sejuk.</p>
+    </div>
+    <div>
+      <h3>Bila harga berubah</h3>
+      <p>Taip harga baharu dalam lajur Harga. Kuantiti order <b>tidak</b> berubah, kerana kadar guna disimpan sebagai kuantiti per RM1,000 jualan, bukan ringgit. Pelanggan makan jumlah yang sama tanpa mengira harga pasar.</p>
+      <p>Bajet setiap item dikunci pada 53% jualan mengikut harga asas Jun hingga September, jadi lonjakan harga muncul sebagai melebihi bajet dan bukan menaikkan bajet sendiri.</p>
+    </div>
+    <div>
+      <h3>Bajet 53% ialah sasaran kos</h3>
+      <p>Mod Bajet menurunkan setiap kuantiti <span class="num">5.6%</span> secara rata. Itu tidak menjimatkan apa-apa dengan sendirinya, ia cuma menyebabkan kehabisan stok kalau spesifikasi dan saiz hidangan tidak berubah. Guna mod itu untuk melihat jurang, bukan untuk order harian.</p>
+      <p>Dua rekod ditanda merah kerana angka inventorinya tidak munasabah. Sahkan dahulu sebelum order ikut nombor itu.</p>
+    </div>
+  </section>
+</main>
+
+<div id="gate" hidden>
+  <div class="gate-kad">
+    <h2>Sheet Order AEM</h2>
+    <p>Masukkan PIN dapur supaya stok dan harga dikongsi dengan team. Sekali sahaja pada peranti ini.</p>
+    <input id="gate-pin" type="text" inputmode="numeric" maxlength="4" autocomplete="off"
+           placeholder="0000" aria-label="PIN empat angka">
+    <button class="btn primary" id="gate-hantar">Masuk</button>
+    <p class="gate-pesan" id="gate-pesan"></p>
+    <button class="pautan" id="gate-lepas">Guna tanpa kongsi</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+const DATA = [{"k":"Protein","raw":"Protein","items":[{"n":"Beef Brisket - KG","u":"KG","p":45.0,"r":2.8924},{"n":"Mutton Trunk -CTN/27.2KG","u":"KG","p":44.63,"r":2.8015,"k":27.2},{"n":"Seabass Fillet -CTN/10KG","u":"KG","p":30.0,"r":0.7669,"k":10},{"n":"BONELESS Chicken- PKT/2KG","u":"KG","p":15.0,"r":0.8609}]},{"k":"Sushi Bar","raw":"SUSHI BAR","items":[{"n":"Mochi Strawberry -CTN/56PKT","u":"PKT","p":10.32,"r":1.0597,"k":56},{"n":"Mochi Durian Cheese -CTN/56PKT","u":"PKT","p":10.32,"r":1.0448,"k":56},{"n":"Mochi Blueberry - CTN/56PKT","u":"PKT","p":10.32,"r":0.6895,"k":56},{"n":"Sushi Ebi 2L -PKT/30PCS","u":"PKT","p":14.65,"r":0.4179},{"n":"Chuka Idako  - PKT/KG","u":"PKT","p":45.5,"r":0.1199},{"n":"Tainan Komachi Japanese Rice - 5kg/pkt","u":"PKT","p":23.74,"r":0.1156},{"n":"Salmon Sliced Sushi -PKT/60PCS","u":"PKT","p":65.5,"r":0.0382},{"n":"Ajitsuke Inari -PKT/60PCS","u":"PKT","p":13.5,"r":0.14},{"n":"Snow Crab Leg -PKT/500GM","u":"PKT","p":18.0,"r":0.0976},{"n":"Chuka Wakame -PKT/KG","u":"PKT","p":14.0,"r":0.1188},{"n":"Dried Seaweed 1/8 Cut -PKT/350PCS","u":"PKT","p":26.2,"r":0.0499},{"n":"SHABU LAMB PATTY","u":"PKT","p":16.0,"r":0.0764},{"n":"Dried Seaweed 1/2 Cut PKT/100PCS","u":"PKT","p":26.0,"r":0.0446},{"n":"SHABU BEEF PATTY","u":"PKT","p":17.8,"r":0.0636},{"n":"Unagi Sliced -PKT/60PCS","u":"PKT","p":66.0,"r":0.0159},{"n":"Chicken Gyoza - 50pcs/pkt","u":"PKT","p":30.0,"r":0.0297},{"n":"Maki Stick 18CM -PKT/500GM","u":"PKT","p":9.7,"r":0.0891},{"n":"Sushi Rice Seasoning - TAB/20L","u":"TAB","p":153.0,"r":0.0053},{"n":"Cheddar Cheese Sliced -PKT/84PCS","u":"PKT","p":40.8,"r":0.018},{"n":"Mayonnaise -BOX/6PKT","u":"PKT","p":19.0,"r":0.0371,"k":6},{"n":"Ebi Gyoza - 10pcs/pkt","u":"PKT","p":6.4,"r":0.1093},{"n":"In House Tamago -PKT/2PCS","u":"PKT","p":9.6,"r":0.07},{"n":"Kirara Joponica Rice -PKT/10KG","u":"PKT","p":54.0,"r":0.0074},{"n":"Salmon Head - PCS","u":"PKT","p":1.5,"r":0.2249},{"n":"DRIED SEAWEED ( 1/20 CUT)","u":"PKT","p":27.0,"r":0.0105},{"n":"Pickled Ginger Slice (Sushi Gari) -PKT/KG","u":"PKT","p":11.0,"r":0.0138},{"n":"Wasabi Powder -PKT/KG","u":"PKT","p":20.0,"r":0.0069},{"n":"Ebiko -BOX/500GM","u":"BOX","p":25.0,"r":0.0016},{"n":"Beef Gyoza - 10pcs/pkt","u":"PKT","p":7.0,"r":0.0042}]},{"k":"Sauce","raw":"Sauce","items":[{"n":"Sesame Dressing -PKT/KG","u":"PKT","p":20.3,"r":0.6781},{"n":"Mala Dressing- PKT/KG","u":"PKT","p":38.0,"r":0.2444},{"n":"Spicy Mayo - 1KG","u":"PKT","p":20.9,"r":0.4191},{"n":"Sesame Sauce -PKT/KG","u":"PKT","p":28.0,"r":0.2483},{"n":"Mala Karubi -PKT/KG","u":"PKT","p":39.0,"r":0.1443},{"n":"Karubi Sauce - PKT/2KG","u":"PKT","p":34.5,"r":0.1384},{"n":"Miso Sauce - PKT/KG","u":"PKT","p":12.6,"r":0.1982},{"n":"Miso Dressing- PKT/KG","u":"PKT","p":14.9,"r":0.0903},{"n":"Rayu -1KG/PKT","u":"PKT","p":33.0,"r":0.0265},{"n":"Wafu Dressing -PKT/KG","u":"PKT","p":14.0,"r":0.0559},{"n":"Satay Sauce -PKT/KG","u":"PKT","p":20.0,"r":0.0314},{"n":"PIKO SWEET SAUCE","u":"PKT","p":7.05,"r":0.0697}]},{"k":"Frozen Pack","raw":"FROZEN PACK FOOD","items":[{"n":"Cheese Fish Tofu -CTN/20PKT/28PCS","u":"PKT","p":9.4,"r":1.2179,"k":20},{"n":"Boston Crab Claw - CTN/10PKT","u":"PKT","p":22.0,"r":0.2149,"k":10},{"n":"Fucuk Ayam Udang  -CTN/25PKT/80PCS","u":"PKT","p":36.5,"r":0.1109,"k":25},{"n":"Mini Fish Fucuk -CTN/32PKT/50PCS","u":"PKT","p":11.44,"r":0.3013,"k":32},{"n":"Seafood Tofu - CTN/20PKT/28PCS","u":"PKT","p":8.3,"r":0.3091,"k":20},{"n":"Wantan Kecil -CTN/25PKT","u":"PKT","p":12.5,"r":0.2012,"k":25},{"n":"LAMB MEAT BALL - (CK) (1KG/PKT)","u":"PKT","p":24.0,"r":0.0944},{"n":"Fucuk Keping -  CTN/25PKT","u":"PKT","p":12.83,"r":0.1737,"k":25},{"n":"Fumai Ikan - CTN/40PKT","u":"PKT","p":13.48,"r":0.1315,"k":40},{"n":"Fish Tofu with Squid -CTN/20PKT/28PCS","u":"PKT","p":9.7,"r":0.1708,"k":20},{"n":"Chicken Frank Cocktail - 10PKT/40PCS","u":"PKT","p":12.5,"r":0.1227},{"n":"Gegulung Ikan Fucuk- CTN/30PKT","u":"PKT","p":18.5,"r":0.0815,"k":30},{"n":"Lobster Flavouredc Ball - CTN/20PKT","u":"PKT","p":9.2,"r":0.1551,"k":20},{"n":"Salmon Flavoured Fish Ball -CTN/20PKT/31PCS","u":"PKT","p":7.4,"r":0.1894,"k":20},{"n":"LAMB MEAT BALL - (CK) - 1KG / PKT","u":"PKT","p":24.0,"r":0.0552},{"n":"BEEF MEAT BALL - (CK) - 1KG/PKT","u":"PKT","p":24.0,"r":0.0541},{"n":"BEEF MEAT BALL - (CK) (1KG/PKT)","u":"PKT","p":24.0,"r":0.0525},{"n":"TEOKBBOKI MALA BALL-CTN/30PKT","u":"PKT","p":10.67,"r":0.1154,"k":30},{"n":"Beef Meat Ball - CTN/10PKT/58PCS","u":"PKT","p":24.0,"r":0.0491,"k":10},{"n":"FRIED FISH TOFU - 10PKT/CTN","u":"PKT","p":18.6,"r":0.0629,"k":10},{"n":"Fried Peanut Blend -PKT/1KG","u":"PKT","p":16.6,"r":0.0559},{"n":"Small White Fish Ball  20PKT/55PCS","u":"PKT","p":5.9,"r":0.1452},{"n":"TEOKBBOKI MALA BALL-CTN/30PKT / 25PCS","u":"PKT","p":10.67,"r":0.079,"k":30},{"n":"FRIED FISH TOFU - 10PKT/CTN/90PCS","u":"PKT","p":18.6,"r":0.0379,"k":10},{"n":"Tauhu Ikan Yu Mai-CTN/40PKT","u":"PKT","p":8.05,"r":0.0186,"k":40}]},{"k":"Vege","raw":"VEGE","items":[{"n":"Watermelon Red S/L","u":"KG","p":4.0,"r":1.3905},{"n":"Mushroom Enoki (1KG=10PKT)","u":"PKT","p":0.9,"r":4.4789},{"n":"Lettuce Coral Green","u":"KG","p":12.0,"r":0.1871,"w":55.2},{"n":"Daun Ketumbar","u":"KG","p":24.0,"r":0.0918,"w":63.8},{"n":"Broccoli","u":"KG","p":9.5,"r":0.221,"w":45.2},{"n":"Garlic Peeled","u":"KG","p":8.0,"r":0.2536},{"n":"Lettuce Baby Romaice","u":"KG","p":9.0,"r":0.2196,"w":38.1},{"n":"Mushroom Shimeji Brown","u":"PKT","p":1.8,"r":0.9572},{"n":"Corn on Cob","u":"NOS","p":2.2,"r":0.7634},{"n":"Chili Padi Green","u":"KG","p":12.0,"r":0.1315},{"n":"Egg","u":"NOS","p":0.42,"r":3.2863,"q":1},{"n":"Spinach/Bayam","u":"KG","p":4.0,"r":0.2545,"w":29.4},{"n":"Mushroom Shitake (1KG=5PKT)","u":"KG","p":4.0,"r":0.2366,"q":1},{"n":"Tomato Cherry","u":"KG","p":15.0,"r":0.0616},{"n":"Mushroom Oyster King","u":"PKT","p":2.8,"r":0.3244},{"n":"Chili Padi Red","u":"KG","p":14.0,"r":0.0616},{"n":"Siew Pak Choy","u":"KG","p":6.0,"r":0.1333,"w":31.1},{"n":"Nai Pak Choy","u":"KG","p":8.5,"r":0.0924,"w":34.3},{"n":"Spring Onion","u":"KG","p":8.0,"r":0.0927},{"n":"Lettuce Iceberg","u":"KG","p":10.5,"r":0.0583},{"n":"Beancurd Pressed Japanese","u":"PKT","p":3.0,"r":0.2012},{"n":"Beancurd Jp W Egg","u":"PCS","p":0.85,"r":0.5987},{"n":"Leek Local","u":"KG","p":12.0,"r":0.0423},{"n":"Cucumber Japan","u":"KG","p":7.0,"r":0.0298},{"n":"Raddish White","u":"KG","p":4.5,"r":0.0202},{"n":"Carrot","u":"KG","p":3.0,"r":0.0216},{"n":"Pumpkin","u":"KG","p":3.0,"r":0.0171}]},{"k":"Soup Base","raw":"Soup base","items":[{"n":"Spicy Miso Ramen Paste -PKT/KG","u":"PKT","p":17.65,"r":0.4423},{"n":"Kyusu Ramen Paste -PKT/1KG","u":"PKT","p":24.8,"r":0.3055},{"n":"Sukiyaki Paste - PKT/KG","u":"PKT","p":14.9,"r":0.4052},{"n":"Kimchi Soup Base -PKT/KG","u":"PKT","p":25.0,"r":0.122}]},{"k":"Yummy Joy","raw":"YUMMY JOY","items":[{"n":"Strawberry Syrup- CTN/12BTL/730ML","u":"PKT","p":26.0,"r":0.1168,"k":12},{"n":"Milk Tea Powder - CTN/12PKT/1KG","u":"PKT","p":29.8,"r":0.0991,"k":12},{"n":"Lime Juice Powder - CTN/12PKT/1KG","u":"PKT","p":23.9,"r":0.106,"k":12},{"n":"Passionfruit Syrup - CTN/12BTL/730ML","u":"PKT","p":27.9,"r":0.0873,"k":12},{"n":"Chocolate Chip - CTN/12PKT/500G","u":"PKT","p":14.3,"r":0.1629,"k":12},{"n":"Apple Tea Powder - CTN/12PKT/1KG","u":"PKT","p":23.5,"r":0.0608,"k":12},{"n":"Honey Powder - CTN/12PKT/1KG","u":"PKT","p":28.8,"r":0.0461,"k":12},{"n":"Jasmine Tea Powder - PKT/1KG","u":"PKT","p":62.5,"r":0.0147},{"n":"Malibu Syrup - CTN/12BTL/730ML","u":"PKT","p":25.8,"r":0.0343,"k":12},{"n":"Hojicha Powder - PKT/500GM","u":"PKT","p":111.0,"r":0.0079},{"n":"Green Tea Latte - CTN/12PKT/1KG","u":"PKT","p":33.5,"r":0.0186,"k":12},{"n":"Butterfly Pea Tea - PKT/500GM","u":"PKT","p":115.0,"r":0.0029},{"n":"Yam Powder - CTN/12PKT/1KG","u":"PKT","p":31.5,"r":0.0098,"k":12},{"n":"Frappe Powder - CTN/12PKT/1KG","u":"PKT","p":28.0,"r":0.0039,"k":12}]},{"k":"Beverage Bar","raw":"BAVERAGE BAR","items":[{"n":"Tiramisu Smoothie Powder- 20PKT","u":"PKT","p":27.5,"r":0.0548},{"n":"Coconut Snow Powder - 20PKT","u":"PKT","p":27.5,"r":0.0524},{"n":"Mango Snow Powder - 20PKT","u":"PKT","p":27.5,"r":0.05},{"n":"Passionfruit Coating 3.2KG","u":"PKT","p":54.0,"r":0.025},{"n":"Aloe Vera Syrup -CAN/3KG","u":"CAN","p":36.0,"r":0.0346},{"n":"Pistachio Smoothie Powder - 20PKT","u":"PKT","p":27.5,"r":0.031},{"n":"SUMIYAKI COFFEE POWDER","u":"PKT","p":30.5,"r":0.0226},{"n":"Red Bean Paste-PKT/500G","u":"PKT","p":8.5,"r":0.0608},{"n":"Sugar Syrup","u":"PKT","p":13.0,"r":0.0179}]},{"k":"Seasoning","raw":"Seasoning & Others","items":[{"n":"Dashi Konbu-PKT/200GM","u":"PKT","p":20.0,"r":0.062},{"n":"Shoyu (TMX) - TAB/18L","u":"TAB","p":130.0,"r":0.0076},{"n":"Hon Dashi (Bonita Seasoning) -BOX/2PKT","u":"PKT","p":25.0,"r":0.0391,"k":2},{"n":"Otafuku Tsuyu No Moto  -BTL/2.4KG","u":"BTL","p":37.3,"r":0.0109},{"n":"Sesame Oil 6KG/TIN","u":"TIN","p":75.0,"r":0.0052},{"n":"Bawang Goreng - PKT/KG","u":"PKT","p":18.3,"r":0.0185},{"n":"White Sesame Seed -PKT/300GM","u":"KG","p":7.8,"r":0.0293},{"n":"Shichimi Tongarashi -PKT/300GM","u":"PKT","p":15.8,"r":0.0043},{"n":"Black Pepper Powder -PKT/5OOGM","u":"PKT","p":14.7,"r":0.0043}]},{"k":"Noodle","raw":"Noodle","items":[{"n":"Fresh Udon - CTN/30PKT","u":"PKT","p":1.53,"r":0.9793,"k":30},{"n":"Noodle Yee Mee- CTN/18PKT/10PCS","u":"PKT","p":4.77,"r":0.2402,"k":18},{"n":"Suhun Glass Noodle -PKT/250GM","u":"PKT","p":3.3,"r":0.1109}]}];
+
+/* bahagian jualan setiap hari, 13 minggu terakhir hingga 9 Sep 2026 */
+const HARI = [11.54, 11.30, 12.41, 12.24, 15.61, 19.61, 17.29];   // Isnin .. Ahad
+const NAMA_HARI = ["Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu","Ahad"];
+/* Setiap pembekal ada senarai slot. Satu slot ialah satu hari order (o) dengan
+   hari barang sampai (s) dan had masa hantar order (tutup). Hari 0 = Isnin. */
+const hariNama = d => NAMA_HARI[((d%7)+7)%7];
+
+function hariAda(){
+  const ada={};
+  Object.keys(S.pembekal).forEach(id=>(S.pembekal[id].slot||[]).forEach(x=>{ ada[x.o]=1; }));
+  return Object.keys(ada).map(Number).sort((a,b)=>a-b);
+}
+const tajukKitaran = k => k==="kw" ? "Seminggu" : "Order "+hariNama(k);
+
+const IKON = {
+  "Protein":'<path d="M3.6 8c1-2.7 4-4.5 7-4.5 3.9 0 6.3 2.4 6.3 5.6 0 3.7-3.2 7.4-7.6 7.4-3.4 0-5.9-2-5.9-4.9 0-1.4.5-2.6 1.2-3.6z"/><circle cx="7.1" cy="9.4" r="1.9"/>',
+  "Sushi Bar":'<rect x="3" y="10" width="14" height="6.2" rx="3.1"/><path d="M4.3 10.4c1.5-2.5 3.5-3.8 5.7-3.8s4.2 1.3 5.7 3.8"/><path d="M9.1 6.6v9.6"/>',
+  "Sauce":'<path d="M8.2 3.2h3.6v2.5l1.9 2.6c.5.7.8 1.5.8 2.3v5.1c0 .8-.7 1.5-1.5 1.5H7c-.8 0-1.5-.7-1.5-1.5v-5.1c0-.8.3-1.6.8-2.3l1.9-2.6z"/><path d="M5.9 11.6h8.2"/>',
+  "Frozen Pack":'<path d="M10 2.8v14.4M3.8 6.4l12.4 7.2M16.2 6.4 3.8 13.6"/><path d="M10 6.2 8.3 4.5M10 6.2l1.7-1.7M10 13.8l-1.7 1.7M10 13.8l1.7 1.7"/>',
+  "Vege":'<path d="M16.6 3.4c.6 6.7-3.4 10.6-7.7 10.6a4.6 4.6 0 0 1-4.6-4.6c0-4.4 4-7.6 12.3-6z"/><path d="M4.2 16.6c2.2-4.3 5.4-7 9.4-8.7"/>',
+  "Soup Base":'<path d="M3.9 8.2h12.2v4.4a4.2 4.2 0 0 1-4.2 4.2H8.1a4.2 4.2 0 0 1-4.2-4.2z"/><path d="M2.4 8.2h15.2"/><path d="M7.6 5.6c0-1.1 1.1-1.3 1.1-2.4M11.9 5.6c0-1.1 1.1-1.3 1.1-2.4"/>',
+  "Noodle":'<path d="M2.8 9.8h11.4a5.7 5.7 0 0 1-5.7 5.7H8.5a5.7 5.7 0 0 1-5.7-5.7z"/><path d="m12.9 4.4 4.4 3.9M14.9 3.2l3.4 3.9"/>',
+  "Seasoning":'<path d="M6.6 8.4h6.8v7.1c0 .9-.7 1.6-1.6 1.6H8.2c-.9 0-1.6-.7-1.6-1.6z"/><path d="M7.5 8.4V6.6a2.5 2.5 0 0 1 5 0v1.8"/><circle cx="8.6" cy="4.3" r=".55" fill="currentColor" stroke="none"/><circle cx="10.6" cy="3.4" r=".55" fill="currentColor" stroke="none"/><circle cx="12.4" cy="4.6" r=".55" fill="currentColor" stroke="none"/>',
+  "Beverage Bar":'<path d="M5.9 6.2h8.2l-1.1 10.4c-.1.5-.5.9-1 .9H8c-.5 0-.9-.4-1-.9z"/><path d="m11.7 6.2 2.6-3.4"/><path d="M6.4 10.2h7.2"/>',
+  "Yummy Joy":'<path d="M5.4 8.6h9.2L13.7 17H6.3z"/><path d="M4.4 8.6a5.6 5.6 0 0 1 11.2 0z"/><circle cx="8.1" cy="14.2" r=".95"/><circle cx="11.2" cy="14.7" r=".95"/><circle cx="9.7" cy="12.2" r=".95"/>'
+};
+const ikon = k => '<svg class="ico" viewBox="0 0 20 20" aria-hidden="true">' + (IKON[k]||"") + '</svg>';
+const warnaKat = k => WARNA[k] || PALET[0];
+function gayaWarna(w){ return 'style="--c:'+w[0]+'; --crgb:'+w[1]+'"'; }
+
+const BUFFER_LALAI = {
+  "Protein":10, "Vege":10, "Sushi Bar":15,
+  "Frozen Pack":20, "Sauce":20, "Soup Base":20, "Noodle":20,
+  "Yummy Joy":30, "Beverage Bar":30, "Seasoning":30
+};
+/* Pembekal sebenar AEM. Kategori dipetakan terus, jadi tiada apa perlu ditetapkan
+   sebelum guna. Beverage Bar, Soup Base dan Noodle masih tekaan, ditanda di bawah. */
+/* warna membawa maklumat: setiap kategori dan setiap pembekal ada rona sendiri
+   supaya mata boleh cari tempatnya tanpa membaca tajuk */
+const WARNA = {
+  "Protein":      ["#CE5A46","206,90,70"],
+  "Sushi Bar":    ["#DD7A8D","221,122,141"],
+  "Sauce":        ["#D9963A","217,150,58"],
+  "Frozen Pack":  ["#4FA6C4","79,166,196"],
+  "Vege":         ["#56A96B","86,169,107"],
+  "Soup Base":    ["#3E9A8F","62,154,143"],
+  "Noodle":       ["#C3A648","195,166,72"],
+  "Seasoning":    ["#8E7BB5","142,123,181"],
+  "Beverage Bar": ["#5B8FD6","91,143,214"],
+  "Yummy Joy":    ["#C25FA8","194,95,168"]
+};
+const PALET = [
+  ["#D9963A","217,150,58"], ["#56A96B","86,169,107"], ["#CE5A46","206,90,70"],
+  ["#C25FA8","194,95,168"], ["#5B8FD6","91,143,214"], ["#3E9A8F","62,154,143"],
+  ["#8E7BB5","142,123,181"], ["#C3A648","195,166,72"]
+];
+
+const PEMBEKAL_LALAI = {
+  "s_central":{nama:"Central Kitchen", ikon:"Protein", warna:0, tekaan:false, slot:[
+      {o:5, s:0, tutup:"1 petang"},   // order Sabtu, sampai Isnin
+      {o:1, s:2, tutup:"2 petang"},   // order Selasa, sampai Rabu
+      {o:3, s:4, tutup:"2 petang"}    // order Khamis, sampai Jumaat
+  ]},
+  "s_nature" :{nama:"Nature Farm",     ikon:"Vege", warna:1, tekaan:false, slot:[
+      {o:0, s:1}, {o:2, s:3}, {o:4, s:5}
+  ]},
+  "s_beacon" :{nama:"Beacon Chicken",  ikon:"Protein", warna:2, tekaan:false, slot:[
+      {o:0, s:1}, {o:2, s:3}, {o:4, s:5}
+  ]},
+  "s_yummy"  :{nama:"Yummy Joy",       ikon:"Yummy Joy", warna:3, tekaan:false, slot:[
+      {o:0, s:0}                      // order Isnin, sampai Isnin
+  ]}
+};
+/* item yang tidak mengikut pembekal kategorinya */
+const ITEM_LALAI = [
+  ["Protein",  "BONELESS Chicken- PKT/2KG",        "s_beacon"],
+  ["Sushi Bar","Dried Seaweed 1/8 Cut -PKT/350PCS","s_beacon"],
+  ["Sushi Bar","Dried Seaweed 1/2 Cut PKT/100PCS", "s_beacon"],
+  ["Sushi Bar","DRIED SEAWEED ( 1/20 CUT)",        "s_beacon"]
+];
+const PETA_KATEGORI = {
+  "Protein":"s_central", "Sushi Bar":"s_central", "Sauce":"s_central",
+  "Frozen Pack":"s_central", "Seasoning":"s_central",
+  "Soup Base":"s_central", "Noodle":"s_central",
+  "Vege":"s_nature",
+  "Yummy Joy":"s_yummy", "Beverage Bar":"s_central"
+};
+const TEKAAN = {};   // semua pembekal sudah disahkan Hasfi
+
+const slug = s => s.replace(/[^A-Za-z0-9]/g,"_").slice(0,40);
+const kunci = (kat,nama) => slug(kat+"|"+nama).slice(0,180);
+const idAsal = kat => PETA_KATEGORI[kat] || "s_central";
+
+function pembekalLalai(){ return JSON.parse(JSON.stringify(PEMBEKAL_LALAI)); }
+
+const MILIK_LALAI = {};
+ITEM_LALAI.forEach(x=>{ MILIK_LALAI[kunci(x[0],x[1])] = x[2]; });
+
+const JUALAN_PURATA = 99557;   // purata 4 minggu terakhir, rujukan waras
+const KADAR_PENUH = DATA.reduce((s,c)=>s+c.items.reduce((t,i)=>t+i.p*i.r,0),0);
+const PCT_ASAS = KADAR_PENUH/10;
+const SKALA_BAJET = 53/PCT_ASAS;
+
+const asas = n => n.toUpperCase().replace(/[^A-Z ]/g," ")
+  .replace(/\b(CTN|PKT|PCS|KG|CK|GM|BOX|BTL|TAB|TIN|CAN|NOS|L)\b/g," ")
+  .replace(/\s+/g," ").trim().split(" ").slice(0,3).join(" ");
+const KAT_URUT = {};
+DATA.forEach((c,i)=>{ KAT_URUT[c.k]=i; });
+const bilAsas = {};
+DATA.forEach(c=>c.items.forEach(i=>{const a=c.k+"/"+asas(i.n); bilAsas[a]=(bilAsas[a]||0)+1;}));
+
+const S = {
+  kitaran:4, jualan:100000, mod:"guna", susun:"pembekal", tunjukPemb:false, fokus:null,
+  buffer:Object.assign({},BUFFER_LALAI),
+  pembekal:pembekalLalai(),
+  milik:{},          // kunci item -> id pembekal
+  harga:{}, stok:{}
+};
+
+const rm0 = n => "RM " + Math.round(n).toLocaleString("en-MY");
+const rm2 = n => Math.round(n).toLocaleString("en-MY");
+const wang = n => n.toLocaleString("en-MY",{minimumFractionDigits:2,maximumFractionDigits:2});
+const isKg = u => (u||"").toUpperCase()==="KG";
+const bulat = (q,u) => isKg(u) ? Math.ceil(q*2)/2 : Math.ceil(q);
+/* Order ialah tolakan terus: keperluan tolak stok, dalam unit stok sendiri.
+   Saiz karton dipapar sebagai maklumat pada nama item, tetapi tidak lagi
+   membulatkan kuantiti, supaya nombor bergerak setiap kali stok ditaip. */
+function kiraOrder(it, perlu, stok){
+  const q = Math.max(0, perlu - stok);
+  if(q<=0) return {order:0, ktn:0};
+  return {order: bulat(q,it.u), ktn:0};
+}
+const papar = (q,u) => isKg(u)
+  ? (Math.round(q*10)/10).toLocaleString("en-MY",{minimumFractionDigits:1,maximumFractionDigits:1})
+  : Math.round(q).toLocaleString("en-MY");
+const lindung = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+const hargaKini = (kat,it) => { const h=S.harga[kunci(kat,it.n)]; return (h>0)?h:it.p; };
+function pemilik(kat,it){
+  const k = kunci(kat,it.n);
+  const id = S.milik[k];
+  if(id && S.pembekal[id]) return id;
+  const lalai = MILIK_LALAI[k];
+  if(lalai && S.pembekal[lalai]) return lalai;
+  if(S.pembekal[idAsal(kat)]) return idAsal(kat);
+  return Object.keys(S.pembekal)[0];
+}
+
+/* liputan satu order: dari hari barang sampai, sehingga hantaran berikutnya */
+function liputan(slot, k){
+  if(!slot || !slot.length) return 0;
+  if(k==="kw") return 1;
+  const kini = slot.filter(x=>x.o===k)[0];
+  if(!kini) return 0;
+  if(slot.length===1) return 1;
+  const tiba = slot.map(x=>x.s).sort((a,b)=>a-b);
+  const pos = tiba.indexOf(kini.s);
+  const b = tiba[(pos+1)%tiba.length];
+  if(b===kini.s) return 1;
+  let jum=0, d=kini.s;
+  do{ jum+=HARI[d]; d=(d+1)%7; } while(d!==b);
+  return jum/100;
+}
+const slotHari = (slot,k) => (slot||[]).filter(x=>x.o===k)[0] || null;
+function seterusnya(slot,k){
+  if(!slot || !slot.length) return null;
+  const hari = slot.map(x=>x.o).sort((a,b)=>a-b);
+  const mula = (typeof k==="number") ? k : -1;
+  for(let n=1;n<=7;n++){
+    const d=(((mula+n)%7)+7)%7;
+    if(hari.indexOf(d)>=0) return d;
+  }
+  return hari[0];
+}
+
+/* ---------- kiraan, item demi item ---------- */
+function kira(){
+  const per=S.jualan/1000, skala=S.mod==="bajet"?SKALA_BAJET:1;
+  const bajetMinggu=S.jualan*0.53;
+  const baris=[];
+  let orderRM=0, bajetKitaranRM=0, gunaMingguRM=0, gunaAsasRM=0, bilUbah=0;
+
+  for(const c of DATA){
+    const buf = 1 + (S.buffer[c.k]||0)/100;
+    for(const it of c.items){
+      const k=kunci(c.k,it.n);
+      const pid=pemilik(c.k,it);
+      const p=S.pembekal[pid];
+      const lip=p?liputan(p.slot,S.kitaran):0;
+      const hrg=hargaKini(c.k,it);
+      const ubah=Math.abs(hrg-it.p)>0.005; if(ubah) bilUbah++;
+      const minggu=it.r*per*skala;
+      const perlu=minggu*lip*buf;
+      const stok=S.stok[k]||0;
+      const ko = lip>0 ? kiraOrder(it, perlu, stok) : {order:0, ktn:0};
+      const order=ko.order, ktn=ko.ktn;
+      const nilai=order*hrg;
+      const bajet=bajetMinggu*(it.p*it.r/KADAR_PENUH)*lip;
+      orderRM+=nilai; gunaMingguRM+=hrg*it.r*per; gunaAsasRM+=it.p*it.r*per; bajetKitaranRM+=bajet;
+      baris.push({kat:c.k, it, k, pid, lip, hrg, ubah, minggu, perlu, stok, order, ktn, nilai, bajet,
+                  ganda:bilAsas[c.k+"/"+asas(it.n)]>1});
+    }
+  }
+  return {baris, orderRM, bajetKitaranRM, gunaMingguRM, gunaAsasRM, bilUbah, bajetMingguRM:bajetMinggu};
+}
+
+/* kumpul baris ikut susunan pilihan */
+function kumpul(R){
+  const g=[], peta={};
+  const tambah=(id,tajuk,ikonKat,extra)=>{
+    if(!peta[id]){ peta[id]={id,tajuk,ikonKat,baris:[],order:0,bajet:0,lip:0,extra:extra||{}}; g.push(peta[id]); }
+    return peta[id];
+  };
+  if(S.susun==="pembekal"){
+    Object.keys(S.pembekal).forEach(id=>{
+      const p=S.pembekal[id];
+      tambah(id, p.nama, p.ikon, {slot:p.slot});
+    });
+    R.baris.forEach(b=>{
+      const grp=peta[b.pid] || tambah(b.pid,"Tanpa nama","Protein",{hari:[]});
+      grp.baris.push(b); grp.order+=b.nilai; grp.bajet+=b.bajet; grp.lip=b.lip;
+    });
+    /* dalam satu pembekal, kekalkan turutan kategori supaya senarai boleh dikira mengikut rak */
+    g.forEach(grp=>grp.baris.sort((x,y)=>
+      (KAT_URUT[x.kat]-KAT_URUT[y.kat]) || (y.it.p*y.it.r - x.it.p*x.it.r)));
+  }else{
+    DATA.forEach(c=>tambah(c.k, c.k, c.k, {}));
+    R.baris.forEach(b=>{
+      const grp=peta[b.kat];
+      grp.baris.push(b); grp.order+=b.nilai; grp.bajet+=b.bajet;
+      grp.lip=Math.max(grp.lip,b.lip);
+    });
+  }
+  g.forEach((grp,i)=>{
+    grp.aktif = grp.baris.some(b=>b.lip>0);
+    if(S.susun==="pembekal"){
+      const p=S.pembekal[grp.id];
+      const n=(p && typeof p.warna==="number") ? p.warna : i;
+      grp.warna = PALET[((n%PALET.length)+PALET.length)%PALET.length];
+    }else{
+      grp.warna = warnaKat(grp.id);
+    }
+  });
+  return g;
+}
+
+/* ---------- lukis ---------- */
+function lukisKitaran(){
+  const hari = hariAda();
+  if(S.kitaran!=="kw" && hari.indexOf(S.kitaran)<0){
+    S.kitaran = hari.length?hari[0]:"kw";
+    tukarKitaran();   /* kunci stok berubah, jadi baca semula */
+  }
+  document.getElementById("cycles").innerHTML = hari.concat(["kw"]).map(k=>{
+    let n=0;
+    Object.keys(S.pembekal).forEach(id=>{ if(liputan(S.pembekal[id].slot,k)>0) n++; });
+    return '<button class="cycle" data-k="'+k+'" aria-pressed="'+(k===S.kitaran)+'">'
+         + '<b>'+(k==="kw"?"Seminggu":hariNama(k))+'</b>'
+         + (k==="kw" ? '' : '<i>'+n+'</i>') + '</button>';
+  }).join("");
+}
+
+function lukisPembekal(R){
+  const kiraItem={}, kiraRM={};
+  R.baris.forEach(b=>{ kiraItem[b.pid]=(kiraItem[b.pid]||0)+1; kiraRM[b.pid]=(kiraRM[b.pid]||0)+b.hrg*b.it.r*(S.jualan/1000); });
+  document.getElementById("pemb").hidden = !S.tunjukPemb;
+  if(!S.tunjukPemb) return;
+  document.getElementById("pemb-list").innerHTML = Object.keys(S.pembekal).map(id=>{
+    const p=S.pembekal[id], n=kiraItem[id]||0;
+    const btn=[0,1,2,3,4,5,6].map(h=>'<button class="day" data-phari="'+h+'" data-pid="'+id+'" aria-pressed="'
+      + (!!slotHari(p.slot,h)) + '" title="Order '+hariNama(h)+'">'+hariNama(h).slice(0,1)
+      + (h===1||h===5 ? '<sub>'+(h===1?'e':'a')+'</sub>' : '') + '</button>').join("");
+    const slotBtn=(p.slot||[]).slice().sort((a,b)=>a.o-b.o).map(x=>
+      '<span class="slot">'+hariNama(x.o)+' &rarr; '
+      + '<select data-sampai="'+id+'" data-o="'+x.o+'" aria-label="Hari sampai untuk order '+hariNama(x.o)+'">'
+      + [0,1,2,3,4,5,6].map(d=>'<option value="'+d+'"'+(d===x.s?" selected":"")+'>'+hariNama(d)+'</option>').join("")
+      + '</select>' + (x.tutup ? '<i>sebelum '+x.tutup+'</i>' : '') + '</span>').join("");
+    const w=PALET[(((typeof p.warna==="number"?p.warna:0)%PALET.length)+PALET.length)%PALET.length];
+    return '<div class="pemb-row" '+gayaWarna(w)+'>'
+      + ikon(p.ikon)
+      + '<input class="nama" data-pnama="'+id+'" value="'+lindung(p.nama)+'" aria-label="Nama supplier">'
+      + '<div class="days"><span class="lbl">Order</span>'+btn+'</div>'
+      + '<span class="kira">'+n+' item &middot; <b>'+rm0(kiraRM[id]||0)+'</b>/minggu</span>'
+      + (n===0 ? '<button class="btn kecil" data-buang="'+id+'">Buang</button>' : '')
+      + (slotBtn ? '<div class="slots">'+slotBtn+'</div>' : '')
+      + '</div>';
+  }).join("");
+}
+
+/* apa yang dipapar dalam tile, bergantung pada sama ada satu pembekal sedang dibuka */
+function skop(R,kump){
+  if(S.fokus){
+    const g=kump.find(x=>x.id===S.fokus);
+    if(g) return {order:g.order, bajet:g.bajet, tajuk:g.tajuk, satu:true};
+  }
+  const aktif=kump.filter(x=>x.aktif);
+  return {order:R.orderRM, bajet:R.bajetKitaranRM,
+          tajuk:aktif.length+" "+(S.susun==="pembekal"?"supplier":"kategori"), satu:false};
+}
+
+function lukis(){
+  const R=kira();
+  const K={id:S.kitaran, nama:tajukKitaran(S.kitaran)};
+  const kump=kumpul(R);
+  if(S.fokus && !kump.some(g=>g.id===S.fokus)) S.fokus=null;
+  const sk=skop(R,kump);
+  const beza=sk.order-sk.bajet;
+
+  document.getElementById("summary").innerHTML =
+    '<div class="tile"><div class="k">Nilai order</div><div class="v">'+rm0(sk.order)+'</div>'
+      + '<div class="s">'+K.nama+' &middot; '+lindung(sk.tajuk)+'</div></div>'
+    + '<div class="tile"><div class="k">Bajet order ini pada 53%</div><div class="v">'+rm0(sk.bajet)+'</div>'
+      + '<div class="s">ikut liputan setiap item</div></div>'
+    + '<div class="tile '+(beza>0?"flag-over":"flag-ok")+'"><div class="k">Beza</div>'
+      + '<div class="v">'+(beza>0?"+":"\u2212")+rm0(Math.abs(beza))+'</div>'
+      + '<div class="s">'+(beza>0?"melebihi bajet":"dalam bajet")+'</div></div>'
+    + '<div class="tile"><div class="k">Guna penuh seminggu</div><div class="v">'+rm0(R.gunaMingguRM)+'</div>'
+      + '<div class="s">'+(R.gunaMingguRM/S.jualan*100).toFixed(1)+'% jualan &middot; bajet '+rm0(R.bajetMingguRM)+'</div></div>';
+
+  const elAmaran=document.getElementById("btn-purata");
+  const lari = Math.abs(S.jualan-JUALAN_PURATA)/JUALAN_PURATA;
+  if(lari>0.4){
+    elAmaran.hidden=false;
+    elAmaran.textContent="Jualan nampak salah. Guna purata RM"+rm2(JUALAN_PURATA);
+  }else{ elAmaran.hidden=true; }
+
+  document.getElementById("note").textContent = S.kitaran==="kw"
+    ? "Keperluan penuh tujuh hari untuk semua item pada jangkaan jualan RM"+rm2(S.jualan)+" seminggu. Guna paparan ini untuk merancang, bukan untuk order."
+    : "Kuantiti menutup dari hari barang sampai sehingga hantaran supplier itu yang berikutnya, pada jangkaan jualan RM"+rm2(S.jualan)+" seminggu"
+      + (S.mod==="bajet" ? ", dikecilkan ke bajet 53%." : ", ikut kadar guna sebenar.");
+
+  const hb=document.getElementById("harga-baris");
+  if(R.bilUbah){
+    const d=R.gunaMingguRM-R.gunaAsasRM;
+    hb.hidden=false;
+    hb.innerHTML='<b>'+R.bilUbah+' harga dikemas kini.</b> Kesan pada kos seminggu '
+      + '<span class="num '+(d>0?"naik":"turun")+'">'+(d>0?"+":"\u2212")+rm0(Math.abs(d))+'</span>'
+      + ', iaitu '+(d>0?"+":"\u2212")+(Math.abs(d)/S.jualan*100).toFixed(2)+' mata peratus food cost. '
+      + 'Kuantiti tidak berubah, kerana kadar guna disimpan sebagai kuantiti bukan ringgit. '
+      + '<button class="pautan" id="btn-pulih-harga">Pulihkan semua harga asas</button>';
+  }else{ hb.hidden=true; hb.innerHTML=""; }
+
+  lukisPembekal(R);
+
+  const susun = kump.slice().sort((a,b)=> (b.aktif-a.aktif) || (b.order-a.order));
+
+  /* halaman pilih, atau bar kembali bila satu pembekal sedang dibuka */
+  const elPilih=document.getElementById("pilih"), elBalik=document.getElementById("balik");
+  const elTajuk=document.getElementById("pilih-tajuk");
+  document.body.dataset.papar = S.fokus ? "kerja" : "pilih";
+  if(!S.fokus){
+    elBalik.hidden=true; elPilih.hidden=false; elTajuk.hidden=false;
+    const bilAktif=kump.filter(g=>g.aktif).length;
+    elTajuk.innerHTML = (S.kitaran==="kw"
+        ? "Pilih "+(S.susun==="pembekal"?"supplier":"kategori")+" untuk dirancang"
+        : "Pilih "+(S.susun==="pembekal"?"supplier":"kategori")+" untuk order "+hariNama(S.kitaran))
+      + ' <span>&middot; '+bilAktif+' order hari ini</span>';
+    elPilih.innerHTML = susun.map(g=>{
+      const lebih = g.bajet>0 && g.order>g.bajet;
+      const sl = g.extra.slot||[];
+      const sNext = S.susun==="pembekal" ? seterusnya(sl, S.kitaran) : null;
+      const slotKini = S.susun==="pembekal" ? slotHari(sl, S.kitaran) : null;
+      const status = g.aktif
+        ? '<span class="kad-status ada">'+(slotKini && slotKini.tutup ? "Hantar sebelum "+slotKini.tutup : "Order hari ini")+'</span>'
+        : '<span class="kad-status">'+(sl.length && sNext!==null ? "Berikutnya "+hariNama(sNext) : "Tiada hari order")+'</span>';
+      const d = g.order-g.bajet;
+      const delta = g.aktif
+        ? '<span class="kad-delta '+(lebih?"lebih":"cukup")+'">'+(d>0?"+":"\u2212")+rm0(Math.abs(d))+' '+(lebih?"melebihi bajet":"bawah bajet")+'</span>'
+        : '';
+      return '<button class="kad'+(g.aktif?"":" rehat")+'" data-fokus="'+lindung(g.id)+'" '+gayaWarna(g.warna)+'>'
+        + '<span class="ico-bulat">'+ikon(g.ikonKat)+'</span>'
+        + '<span class="kad-nama">'+lindung(g.tajuk)+'</span>' + status
+        + '<span class="kad-rm">'+(g.aktif?rm0(g.order):"&mdash;")+'</span>'
+        + delta
+        + '<span class="kad-sub">'+g.baris.length+' item'
+        + (g.aktif && slotKini ? ' &middot; sampai '+hariNama(slotKini.s) : '')
+        + (g.aktif ? ' &middot; bajet <b>'+rm0(g.bajet)+'</b>' : '')+'</span></button>';
+    }).join("")
+    + (S.susun==="pembekal"
+        ? '<button class="kad kad-tambah" id="kad-tambah"><span class="tanda">+</span>'
+          + '<span class="kad-nama">Tambah supplier</span>'
+          + '<span class="kad-sub">Nama, hari order dan hari sampai</span></button>'
+        : "");
+  }else{
+    const g=kump.find(x=>x.id===S.fokus);
+    elPilih.hidden=true; elTajuk.hidden=true; elBalik.hidden=false;
+    elBalik.innerHTML = '<button id="btn-balik">&larr; Semua '+(S.susun==="pembekal"?"supplier":"kategori")+'</button>'
+      + '<span class="kini">'+lindung(g.tajuk)+' <span>&middot; '+K.nama+'</span></span>';
+  }
+
+  const papar_kump = S.fokus ? susun.filter(g=>g.id===S.fokus) : [];
+  document.getElementById("cats").innerHTML = papar_kump.map(g=>{
+    const kepala = '<div class="cat-name">'+ikon(g.ikonKat)+'<h2>'+lindung(g.tajuk)+'</h2></div>'
+      + (S.susun==="kategori"
+          ? '<label class="cat-buf">Buffer <input type="text" inputmode="numeric" data-buf="'+lindung(g.id)+'" value="'+(S.buffer[g.id]||0)+'" aria-label="Buffer '+lindung(g.id)+'">%</label>'
+          : '<span class="sumber">'+g.baris.length+' item</span>');
+
+    if(!g.aktif){
+      let txt="Tiada hari order dipilih.";
+      if(S.susun==="pembekal"){
+        const sn=seterusnya(g.extra.slot||[], S.kitaran);
+        if((g.extra.slot||[]).length) txt="Tiada order hari ini. Order berikutnya "+(sn!==null?hariNama(sn):"?")+".";
+      }else{
+        txt="Tiada supplier kategori ini yang order hari ini.";
+      }
+      return '<section class="cat rehat" data-grp="'+lindung(g.id)+'" '+gayaWarna(g.warna)+'><div class="cat-head">'+kepala
+        + '<span class="rehat-txt">'+txt+'</span></div></section>';
+    }
+
+    const pct = g.bajet>0 ? g.order/g.bajet : 0;
+    const nampak = g.baris.filter(b=>b.lip>0);
+    const subJum = {};
+    nampak.forEach(b=>{ subJum[b.kat]=(subJum[b.kat]||0)+b.nilai; });
+    let katKini = null;
+    const rows = nampak.map(b=>{
+      let tajukSub = "";
+      if(S.susun==="pembekal" && b.kat!==katKini){
+        katKini = b.kat;
+        tajukSub = '<tr class="sub" data-sub="'+lindung(b.kat)+'" '+gayaWarna(warnaKat(b.kat))+'><td colspan="8"><span class="sub-in">'
+          + ikon(b.kat) + '<span>' + b.kat + '</span>'
+          + '<span class="sub-rm">' + rm0(subJum[b.kat]||0) + '</span></span></td></tr>';
+      }
+      const lencana=[];
+      if(b.it.q) lencana.push('<span class="badge q">angka diragui</span>');
+      if(b.it.w) lencana.push('<span class="badge w">buang '+b.it.w+'%</span>');
+      if(b.ganda) lencana.push('<span class="badge d">kod berganda</span>');
+      if(b.it.k) lencana.push('<span class="badge c">1 ctn = '+b.it.k+' '+b.it.u+'</span>');
+      if(b.ubah){
+        const pc=(b.hrg/b.it.p-1)*100;
+        lencana.push('<span class="badge h">'+(pc>0?"+":"\u2212")+Math.abs(pc).toFixed(0)+'% vs RM'+wang(b.it.p)+'</span>');
+      }
+      const awalan = tajukSub;
+      let bawah = "";
+      if(TEKAAN[b.kat]) bawah = '<span class="badge q">supplier tekaan</span>';
+      return awalan + '<tr'+(b.order===0?' class="cukup"':'')+'>'
+        + '<td class="l"><span class="item-n">'+b.it.n+'</span>'
+        + (lencana.length||bawah ? '<span class="badges">'+bawah+lencana.join("")+'</span>' : '')
+        + '</td>'
+        + '<td class="unit hide-xs">'+b.it.u+'</td>'
+        + '<td class="n hide-s">'+papar(b.minggu,b.it.u)+'</td>'
+        + '<td class="n need">'+papar(b.perlu,b.it.u)+'</td>'
+        + '<td><input class="stok num" type="text" inputmode="decimal" data-key="'+b.k+'" value="'+(b.stok?papar(b.stok,b.it.u):"")+'" placeholder="0" aria-label="Stok ada '+lindung(b.it.n)+'"></td>'
+        + '<td class="n order'+(b.order===0?" zero":"")+'">'
+        + (b.order===0 ? "\u2014" : papar(b.order,b.it.u))+'</td>'
+        + '<td class="hide-xs"><input class="harga num'+(b.ubah?" ubah":"")+'" type="text" inputmode="decimal" data-harga="'+b.k+'" value="'+(b.ubah?wang(b.hrg):"")+'" placeholder="'+wang(b.it.p)+'" aria-label="Harga seunit '+lindung(b.it.n)+'"></td>'
+        + '<td class="n rm hide-xs">'+(b.order===0?"\u2014":rm2(b.nilai))+'</td>'
+        + '</tr>';
+    }).join("");
+
+    let lipTeks;
+    if(S.susun==="pembekal"){
+      const sl2=slotHari((S.pembekal[g.id]||{}).slot, S.kitaran);
+      lipTeks = (sl2 ? 'sampai '+hariNama(sl2.s)+' &middot; ' : '') + 'tutup '+Math.round(g.lip*100)+'% minggu';
+    }else{
+      lipTeks = g.baris.filter(b=>b.lip>0).length+' item order hari ini';
+    }
+
+    return '<section class="cat" data-grp="'+lindung(g.id)+'" '+gayaWarna(g.warna)+'><div class="cat-head">'+kepala
+      + '<div class="cat-fig">'
+      + '<div class="gauge '+(pct>1?"over":"")+'">'
+      + '<div class="bar"><div class="fill" style="width:'+Math.min(100,pct*100).toFixed(1)+'%"></div></div>'
+      + '<div class="cap"><span>'+lipTeks+'</span><b>'+Math.round(pct*100)+'%</b></div></div>'
+      + '<div class="rm-blok"><div class="rm">'+rm0(g.order)+'</div>'
+      + '<div class="rm-sub">bajet '+rm0(g.bajet)+'</div></div>'
+      + '</div></div>'
+      + '<div class="scroller"><table>'
+      + '<thead><tr><th class="l">Item</th><th class="hide-xs">Unit</th><th class="hide-s">Guna /mgg</th>'
+      + '<th>Perlu</th><th>Stok ada</th><th>Order</th><th class="hide-xs">Harga</th><th class="hide-xs">RM</th></tr></thead>'
+      + '<tbody>'+rows+'</tbody>'
+      + '<tfoot><tr><td class="l" colspan="5">Jumlah '+lindung(g.tajuk)+'</td><td></td><td class="hide-xs"></td>'
+      + '<td class="n hide-xs">'+rm2(g.order)+'</td></tr></tfoot>'
+      + '</table></div></section>';
+  }).join("");
+
+  lukisTeks(kump,K);
+  lukisMinggu();
+}
+
+function teksIkut(b){ return ""; }
+
+function lukisTeks(kump,K){
+  const d=new Date();
+  const out=["ORDER SHABUYAKI AEM", K.nama+" - "+K.sub,
+    NAMA_HARI[(d.getDay()+6)%7]+" "+d.getDate()+"/"+(d.getMonth()+1)+"/"+d.getFullYear(),
+    "Jangkaan jualan RM"+rm2(S.jualan)+" seminggu", ""];
+  let jum=0;
+  kump.forEach(g=>{
+    if(S.fokus && g.id!==S.fokus) return;
+    const ada=g.baris.filter(b=>b.order>0);
+    if(!g.aktif || !ada.length) return;
+    out.push(g.tajuk.toUpperCase());
+    let kat=null;
+    ada.forEach(b=>{
+      if(S.susun==="pembekal" && b.kat!==kat){ kat=b.kat; out.push("  ["+b.kat+"]"); }
+      out.push("  "+b.it.n+" - "+papar(b.order,b.it.u)+" "+b.it.u);
+    });
+    out.push("  ("+rm0(g.order)+")","");
+    jum+=g.order;
+  });
+  out.push("JUMLAH "+rm0(jum));
+  document.getElementById("out").textContent=out.join("\n");
+}
+
+/* ---------- interaksi ---------- */
+const nombor = s => { const n=parseFloat(String(s).replace(/[^0-9.]/g,"")); return isFinite(n)?n:0; };
+
+function fokusKekal(fn){
+  const a=document.activeElement;
+  let sel=null;
+  if(a && a.dataset){
+    if(a.dataset.buf) sel='[data-buf="'+a.dataset.buf+'"]';
+    else if(a.dataset.key) sel='[data-key="'+a.dataset.key+'"]';
+    else if(a.dataset.harga) sel='[data-harga="'+a.dataset.harga+'"]';
+    else if(a.dataset.pnama) sel='[data-pnama="'+a.dataset.pnama+'"]';
+  }
+  const pos = (a && a.selectionStart!=null) ? a.selectionStart : null;
+  fn();
+  if(sel){ const n=document.querySelector(sel);
+    if(n){ n.focus(); try{ const p=(pos!=null?pos:n.value.length); n.setSelectionRange(p,p); }catch(_){} } }
+}
+
+document.getElementById("cycles").addEventListener("click", e=>{
+  const b=e.target.closest("[data-k]"); if(!b) return;
+  S.kitaran = b.dataset.k==="kw" ? "kw" : Number(b.dataset.k);
+  lukisKitaran(); tukarKitaran();
+});
+document.getElementById("jualan").addEventListener("input", e=>{
+  S.jualan=Math.max(0,nombor(e.target.value)); lukis(); simpanTetapan();
+});
+document.getElementById("jualan").addEventListener("blur", e=>{ e.target.value=rm2(S.jualan); });
+document.getElementById("btn-purata").onclick=()=>{
+  S.jualan=JUALAN_PURATA;
+  document.getElementById("jualan").value=rm2(S.jualan);
+  lukis(); simpanTetapan(); bisik("Jualan dikembalikan kepada purata");
+};
+
+function setMod(m,senyap){
+  S.mod=m;
+  document.getElementById("mod-guna").setAttribute("aria-pressed", m==="guna");
+  document.getElementById("mod-bajet").setAttribute("aria-pressed", m==="bajet");
+  document.getElementById("mod-hint").textContent = m==="guna"
+    ? "Order penuh ikut apa yang dapur betul-betul guna"
+    : "Setiap kuantiti dikecilkan 5.6% ke sasaran 53%";
+  if(!senyap){ lukis(); simpanTetapan(); }
+}
+document.getElementById("mod-guna").onclick=()=>setMod("guna");
+document.getElementById("mod-bajet").onclick=()=>setMod("bajet");
+
+function setSusun(v,senyap){
+  S.susun=v;
+  document.getElementById("susun-pembekal").setAttribute("aria-pressed", v==="pembekal");
+  document.getElementById("susun-kategori").setAttribute("aria-pressed", v==="kategori");
+  document.getElementById("susun-hint").textContent = v==="pembekal"
+    ? "Satu senarai untuk setiap supplier" : "Satu senarai untuk setiap kategori, untuk semak bajet";
+  if(!senyap){ lukis(); simpanTetapan(); }
+}
+document.getElementById("susun-pembekal").onclick=()=>setSusun("pembekal");
+document.getElementById("susun-kategori").onclick=()=>setSusun("kategori");
+
+/* panel pembekal */
+document.getElementById("pemb").addEventListener("click", e=>{
+  const h=e.target.closest("[data-phari]");
+  if(h){
+    const p=S.pembekal[h.dataset.pid]; if(!p) return;
+    const d=Number(h.dataset.phari);
+    p.slot = p.slot || [];
+    const ada = slotHari(p.slot,d);
+    if(ada) p.slot = p.slot.filter(x=>x.o!==d);
+    else p.slot.push({o:d, s:(d+1)%7});
+    p.slot.sort((a,b)=>a.o-b.o);
+    lukisKitaran(); lukis(); simpanTetapan(); return;
+  }
+  const b=e.target.closest("[data-buang]");
+  if(b){
+    delete S.pembekal[b.dataset.buang];
+    lukisKitaran(); lukis(); simpanTetapan(); bisik("Supplier dibuang");
+  }
+});
+document.getElementById("pemb").addEventListener("change", e=>{
+  const t=e.target;
+  if(t.dataset.sampai!==undefined){
+    const p=S.pembekal[t.dataset.sampai]; if(!p) return;
+    const sl=slotHari(p.slot, Number(t.dataset.o)); if(!sl) return;
+    sl.s=Number(t.value);
+    lukisKitaran(); lukis(); simpanTetapan();
+  }
+});
+document.getElementById("pemb").addEventListener("input", e=>{
+  const t=e.target;
+  if(t.dataset.pnama!==undefined && S.pembekal[t.dataset.pnama]){
+    S.pembekal[t.dataset.pnama].nama = t.value;
+    simpanTetapan();
+    document.querySelectorAll('select.pilih option[value="'+t.dataset.pnama+'"]').forEach(o=>{ o.textContent=t.value; });
+    const sec=document.querySelector('.cat[data-grp="'+t.dataset.pnama+'"] h2');
+    if(sec) sec.textContent=t.value;
+  }
+});
+document.getElementById("btn-tetapan").onclick=e=>{
+  S.tunjukPemb=!S.tunjukPemb;
+  e.currentTarget.setAttribute("aria-pressed", S.tunjukPemb);
+  document.getElementById("lanjut").hidden = !S.tunjukPemb;
+  lukis();
+  if(S.tunjukPemb) document.getElementById("pemb").scrollIntoView({block:"nearest"});
+};
+function tambahPembekal(){
+  let n=1; while(S.pembekal["s_baharu_"+n]) n++;
+  const id="s_baharu_"+n;
+  S.pembekal[id]={nama:"Supplier baharu "+n, ikon:"Frozen Pack", tekaan:false,
+                  warna:Object.keys(S.pembekal).length % PALET.length, slot:[{o:2, s:3}]};
+  S.tunjukPemb=true;
+  document.getElementById("btn-tetapan").setAttribute("aria-pressed","true");
+  document.getElementById("lanjut").hidden=false;
+  lukisKitaran(); lukis(); simpanTetapan();
+  const inp=document.querySelector('[data-pnama="'+id+'"]');
+  if(inp){ inp.scrollIntoView({block:"center"}); inp.focus(); inp.select(); }
+}
+document.getElementById("btn-tambah").onclick=tambahPembekal;
+
+document.getElementById("pilih").addEventListener("click", e=>{
+  if(e.target.closest("#kad-tambah")){ tambahPembekal(); return; }
+  const b=e.target.closest("[data-fokus]"); if(!b) return;
+  S.fokus=b.dataset.fokus; lukis();
+  window.scrollTo({top:0, behavior:"instant"});
+});
+document.getElementById("balik").addEventListener("click", e=>{
+  if(!e.target.closest("#btn-balik")) return;
+  S.fokus=null; lukis();
+  window.scrollTo({top:0, behavior:"instant"});
+});
+
+document.addEventListener("click", e=>{
+  if(e.target && e.target.id==="btn-pulih-harga"){
+    S.harga={}; fokusKekal(lukis); simpanTetapan(); bisik("Harga asas dipulihkan");
+  }
+});
+
+document.getElementById("cats").addEventListener("change", e=>{
+  const t=e.target;
+  if(t.dataset.milik!==undefined){
+    S.milik[t.dataset.milik]=t.value;
+    lukis(); simpanTetapan(); bisik("Item dipindahkan");
+  }else if(t.dataset.harga!==undefined){
+    fokusKekal(lukis);
+  }
+});
+document.getElementById("cats").addEventListener("input", e=>{
+  const t=e.target;
+  if(t.classList.contains("stok")){
+    const v=nombor(t.value);
+    if(v>0) S.stok[t.dataset.key]=v; else delete S.stok[t.dataset.key];
+    kemasBaris(t); simpanStok();
+
+  }else if(t.dataset.harga!==undefined){
+    const v=nombor(t.value);
+    if(v>0) S.harga[t.dataset.harga]=v; else delete S.harga[t.dataset.harga];
+    kemasBaris(t); simpanTetapan();
+  }else if(t.dataset.buf!==undefined){
+    S.buffer[t.dataset.buf]=Math.max(0,Math.min(200,nombor(t.value)));
+    fokusKekal(lukis); simpanTetapan();
+  }
+});
+
+function cariBaris(k){
+  for(const c of DATA) for(const it of c.items) if(kunci(c.k,it.n)===k) return {kat:c.k,it};
+  return null;
+}
+function kemasBaris(input){
+  const k=input.dataset.key || input.dataset.harga;
+  const f=cariBaris(k); if(!f) return;
+  const tr=input.closest("tr");
+  const per=S.jualan/1000, skala=S.mod==="bajet"?SKALA_BAJET:1;
+  const p=S.pembekal[pemilik(f.kat,f.it)];
+  const lip=p?liputan(p.slot,S.kitaran):0;
+  const buf=1+(S.buffer[f.kat]||0)/100;
+  const perlu=f.it.r*per*skala*lip*buf;
+  const stok=S.stok[k]||0;
+  const ko = lip>0 ? kiraOrder(f.it, perlu, stok) : {order:0, ktn:0};
+  const order=ko.order, ktn=ko.ktn;
+  const hrg=hargaKini(f.kat,f.it);
+  tr.classList.toggle("cukup", order===0);
+  const tdR=tr.querySelector("td.rm");
+  const tdO=tr.querySelector("td.order");
+  if(tdO){
+    tdO.classList.toggle("zero", order===0);
+    tdO.textContent = order===0 ? "\u2014" : papar(order,f.it.u);
+  }
+  if(tdR) tdR.textContent = order===0?"\u2014":rm2(order*hrg);
+  const ih=tr.querySelector("input.harga");
+  if(ih) ih.classList.toggle("ubah", Math.abs(hrg-f.it.p)>0.005);
+  kemasJumlah();
+}
+function kemasJumlah(){
+  const R=kira(), K={id:S.kitaran, nama:tajukKitaran(S.kitaran)};
+  const kump=kumpul(R);
+  const sk=skop(R,kump);
+  const beza=sk.order-sk.bajet;
+  const t=document.querySelectorAll("#summary .tile");
+  if(t[0]) t[0].querySelector(".v").textContent=rm0(sk.order);
+  if(t[1]) t[1].querySelector(".v").textContent=rm0(sk.bajet);
+  if(t[2]){
+    t[2].className="tile "+(beza>0?"flag-over":"flag-ok");
+    t[2].querySelector(".v").textContent=(beza>0?"+":"\u2212")+rm0(Math.abs(beza));
+    t[2].querySelector(".s").textContent=beza>0?"melebihi bajet":"dalam bajet";
+  }
+  if(t[3]){
+    t[3].querySelector(".v").textContent=rm0(R.gunaMingguRM);
+    t[3].querySelector(".s").textContent=(R.gunaMingguRM/S.jualan*100).toFixed(1)+"% jualan \u00b7 bajet "+rm0(R.bajetMingguRM);
+  }
+  kump.forEach(g=>{
+    if(!g.aktif) return;
+    const sec=document.querySelector('.cat[data-grp="'+g.id.replace(/"/g,'')+'"]'); if(!sec) return;
+    const pct=g.bajet>0?g.order/g.bajet:0;
+    const rm=sec.querySelector(".rm-blok .rm"); if(rm) rm.textContent=rm0(g.order);
+    const gg=sec.querySelector(".gauge");
+    if(gg){ gg.classList.toggle("over",pct>1);
+      gg.querySelector(".fill").style.width=Math.min(100,pct*100).toFixed(1)+"%";
+      gg.querySelector(".cap b").textContent=Math.round(pct*100)+"%"; }
+    const tf=sec.querySelector("tfoot td.n.hide-xs"); if(tf) tf.textContent=rm2(g.order);
+    const sub={};
+    g.baris.filter(b=>b.lip>0).forEach(b=>{ sub[b.kat]=(sub[b.kat]||0)+b.nilai; });
+    sec.querySelectorAll("tr.sub").forEach(tr=>{
+      const el=tr.querySelector(".sub-rm");
+      if(el) el.textContent=rm0(sub[tr.dataset.sub]||0);
+    });
+  });
+  lukisTeks(kump,K);
+}
+
+document.getElementById("btn-kosong").onclick=()=>{
+  if(!Object.keys(S.stok).length){ bisik("Stok memang kosong"); return; }
+  S.stok={}; fokusKekal(lukis); simpanStok(true); bisik("Stok dikosongkan");
+};
+document.getElementById("btn-cetak").onclick=()=>window.print();
+document.getElementById("btn-salin").onclick=async ()=>{
+  const t=document.getElementById("out").textContent;
+  try{ await navigator.clipboard.writeText(t); bisik("Senarai disalin"); }
+  catch(_){
+    const r=document.createRange(); r.selectNodeContents(document.getElementById("out"));
+    const s=getSelection(); s.removeAllRanges(); s.addRange(r); bisik("Teks ditanda, tekan Ctrl+C");
+  }
+};
+function bisik(m){
+  const t=document.getElementById("toast"); t.textContent=m;
+  setTimeout(()=>{ if(t.textContent===m) t.textContent=""; },2600);
+}
+
+/* ---------- ringkasan minggu ---------- */
+let rekodMinggu=[];
+function isninMinggu(){
+  const d=new Date();
+  d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - ((d.getDay()+6)%7));   // undur ke Isnin
+  return d.toISOString().slice(0,10);
+}
+async function muatMinggu(){
+  if(!DB) return;
+  try{
+    const snap = await DB.collection("pesanan").orderBy("tarikh","desc").limit(30).get();
+    const mula = isninMinggu();
+    rekodMinggu = snap.docs.map(d=>d.data()).filter(x=>x && x.tarikh && x.tarikh>=mula);
+    lukisMinggu();
+  }catch(_){ }
+}
+function lukisMinggu(){
+  const el=document.getElementById("minggu");
+  if(!el) return;
+  if(S.fokus || !DB){ el.hidden=true; return; }
+  el.hidden=false;
+  const bajet = S.jualan*0.53;
+  const jum = rekodMinggu.reduce((a,x)=>a+(Number(x.jumlahRM)||0),0);
+  const pct = bajet>0 ? jum/bajet : 0;
+  const sisa = bajet-jum;
+  const senarai = rekodMinggu.slice().sort((a,b)=>a.tarikh<b.tarikh?-1:1).map(x=>
+    '<span class="rekod"><b>'+lindung(x.pembekal||"?")+'</b>'
+    + '<span>'+(x.hari||"")+'</span>'
+    + '<span>'+rm0(x.jumlahRM||0)+'</span></span>').join("");
+  el.innerHTML =
+    '<div class="minggu-atas"><h2>Order minggu ini</h2>'
+    + '<span class="sisa">bajet '+rm0(bajet)+'</span>'
+    + '<span class="jum">'+rm0(jum)+'</span></div>'
+    + '<div class="bar'+(pct>1?" lebih":"")+'"><i style="width:'+Math.min(100,pct*100).toFixed(1)+'%"></i></div>'
+    + (rekodMinggu.length
+        ? '<div class="minggu-senarai">'+senarai+'</div>'
+          + '<p class="minggu-kosong">'+rekodMinggu.length+' order disimpan &middot; '
+          + (sisa>=0 ? 'baki '+rm0(sisa) : 'melebihi '+rm0(-sisa))+' untuk baki minggu</p>'
+        : '<p class="minggu-kosong">Belum ada order disimpan minggu ini. Tekan Simpan salinan selepas menghantar order.</p>');
+}
+
+/* ---------- simpanan dikongsi ---------- */
+let DB=null, lepasStok=null, tundaS=null, tundaT=null, tulisSendiri=0;
+
+/* dinaikkan bila senarai pembekal lalai berubah, supaya tetapan lama tidak
+   menyekat pembekal baharu daripada muncul */
+const VERSI = 6;
+const kunciKitaran = () => (S.kitaran==="kw") ? "kw" : ("h"+S.kitaran);
+const badanTetapan = ()=>({versi:VERSI, jualan:S.jualan, mod:S.mod, susun:S.susun, buffer:S.buffer,
+  pembekal:S.pembekal, milik:S.milik, harga:S.harga, pada:new Date().toISOString()});
+const badanStok = ()=>({stok:S.stok, pada:new Date().toISOString()});
+
+function simpanTetapan(){
+  adaUbah=true;
+  try{ localStorage.setItem("aem-tetapan", JSON.stringify(badanTetapan())); }catch(_){}
+  if(!DB) return;
+  clearTimeout(tundaT);
+  tundaT=setTimeout(()=>{ tulisSendiri=Date.now(); DB.doc("tetapan/umum").set(badanTetapan()).catch(()=>{}); },700);
+}
+function simpanStok(segera){
+  adaUbah=true;
+  try{ localStorage.setItem("aem-stok-"+kunciKitaran(), JSON.stringify(badanStok())); }catch(_){}
+  if(!DB) return;
+  clearTimeout(tundaS);
+  tundaS=setTimeout(()=>{ tulisSendiri=Date.now(); DB.doc("stok/"+kunciKitaran()).set(badanStok()).catch(()=>{}); }, segera?0:700);
+}
+function gunaTetapan(d){
+  if(typeof d.jualan==="number" && d.jualan>0) S.jualan=d.jualan;
+  if(d.mod==="guna"||d.mod==="bajet") S.mod=d.mod;
+  if(d.susun==="pembekal"||d.susun==="kategori") S.susun=d.susun;
+  if(d.buffer && typeof d.buffer==="object") S.buffer=Object.assign({},BUFFER_LALAI,d.buffer);
+  if(d.harga && typeof d.harga==="object"){
+    const h={}; Object.keys(d.harga).forEach(k=>{ const v=Number(d.harga[k]); if(isFinite(v)&&v>0) h[k]=v; });
+    S.harga=h;
+  }
+  /* tetapan sebelum VERSI ini tidak tahu tentang pembekal baharu, jadi
+     senarai pembekal dan agihan item kembali kepada lalai sekali sahaja */
+  if(!(d.versi>=VERSI)){
+    S.pembekal=pembekalLalai(); S.milik={};
+    return;
+  }
+  if(d.pembekal && typeof d.pembekal==="object" && Object.keys(d.pembekal).length){
+    const p={};
+    Object.keys(d.pembekal).forEach(id=>{
+      const x=d.pembekal[id]; if(!x) return;
+      const sl=[];
+      if(Array.isArray(x.slot)) x.slot.forEach(y=>{
+        const o=Number(y&&y.o), sa=Number(y&&y.s);
+        if(o>=0&&o<=6&&sa>=0&&sa<=6 && !sl.some(z=>z.o===o))
+          sl.push(y.tutup?{o:o,s:sa,tutup:String(y.tutup).slice(0,20)}:{o:o,s:sa});
+      });
+      p[id]={ nama:String(x.nama||"Tanpa nama").slice(0,60),
+              slot:sl.sort((a,b)=>a.o-b.o),
+              ikon:IKON[x.ikon]?x.ikon:"Frozen Pack",
+              tekaan:!!x.tekaan,
+              warna:(typeof x.warna==="number" && isFinite(x.warna)) ? x.warna : 0 };
+    });
+    if(Object.keys(p).length) S.pembekal=p;
+  }
+  if(d.milik && typeof d.milik==="object"){
+    const m={}; Object.keys(d.milik).forEach(k=>{ if(S.pembekal[d.milik[k]]) m[k]=d.milik[k]; });
+    S.milik=m;
+  }
+}
+function muatSetempat(){
+  try{ const a=localStorage.getItem("aem-tetapan"); if(a) gunaTetapan(JSON.parse(a)); }catch(_){}
+}
+/* Stok MESTI dibaca selepas kitaran hari ini dipilih, sebab kuncinya
+   bergantung pada kitaran. Dahulu ia dibaca dalam muatSetempat() dengan
+   kitaran lalai (Jumaat), jadi pada hari lain stok yang ditaip kekal
+   tersimpan tetapi tidak pernah dibaca balik. Db artifact menutup lubang
+   itu melalui langganan; tanpa db (PWA / APK) stok nampak hilang. */
+function muatStokSetempat(){
+  try{ const b=localStorage.getItem("aem-stok-"+kunciKitaran()); if(b){ const d=JSON.parse(b); if(d.stok) S.stok=d.stok; } }catch(_){}
+}
+function tukarKitaran(){
+  if(lepasStok){ lepasStok(); lepasStok=null; }
+  S.stok={};
+  try{ const b=localStorage.getItem("aem-stok-"+kunciKitaran()); if(b){ const d=JSON.parse(b); if(d.stok) S.stok=d.stok; } }catch(_){}
+  lukis();
+  if(DB) langganStok();
+}
+function langganStok(){
+  lepasStok = DB.doc("stok/"+kunciKitaran()).onSnapshot(s=>{
+    if(Date.now()-tulisSendiri < 1500) return;
+    if(!s.exists) return;
+    const a=document.activeElement;
+    if(a && a.classList && (a.classList.contains("stok"))) return;
+    const d=s.data();
+    if(d && d.stok) S.stok=d.stok;
+    if(d)
+    fokusKekal(lukis);
+  }, ()=>{});
+}
+
+document.getElementById("btn-simpan").onclick=async ()=>{
+  if(S.kitaran==="kw"){ bisik("Pilih satu hari order dahulu"); return; }
+  const R=kira(), K={id:S.kitaran, nama:tajukKitaran(S.kitaran)};
+  const tarikh=new Date().toISOString().slice(0,10);
+  if(!S.fokus){ bisik("Buka satu supplier dahulu"); return; }
+  const pilih=R.baris.filter(b=>b.order>0 && b.pid===S.fokus);
+  const item=pilih.map(b=>({kat:b.kat, nama:b.it.n, unit:b.it.u,
+    order:b.order, ktn:b.ktn, stok:b.stok, harga:b.hrg, hargaAsas:b.it.p, rm:Math.round(b.nilai)}));
+  if(!item.length){ bisik("Tiada item untuk disimpan"); return; }
+  const nama=(S.pembekal[S.fokus]||{}).nama||"";
+  const jum=pilih.reduce((a,b)=>a+b.nilai,0);
+  const rekod={tarikh, hari:hariNama(S.kitaran==="kw"?0:S.kitaran), kitaran:K.nama,
+    pembekalId:S.fokus, pembekal:nama, jualan:S.jualan, mod:S.mod,
+    jumlahRM:Math.round(jum), bilItem:item.length, item};
+  if(!DB){ bisik("Tiada sambungan, salinan tak disimpan"); return; }
+  try{
+    await DB.doc("pesanan/"+tarikh+"-"+kunciKitaran()+"-"+S.fokus).set(rekod);
+    bisik(nama+" "+tarikh+" disimpan");
+    muatMinggu();
+  }catch(_){ bisik("Gagal simpan salinan"); }
+};
+
+/* ---------- tema ---------- */
+let tema="gelap";
+try{ tema=localStorage.getItem("aem-tema")||"gelap"; }catch(_){}
+const btnTema=document.getElementById("btn-tema");
+function pakaiTema(t){
+  tema=t;
+  document.documentElement.setAttribute("data-theme", t==="terang"?"light":"dark");
+  btnTema.textContent = t==="terang" ? "Gelap" : "Terang";
+  try{ localStorage.setItem("aem-tema",t); }catch(_){}
+}
+pakaiTema(tema);
+btnTema.onclick=()=>pakaiTema(tema==="terang"?"gelap":"terang");
+
+/* ---------- mula ---------- */
+muatSetempat();
+/* mula pada hari ini kalau ia hari order, jika tidak hari order yang terdekat */
+(function(){
+  const ada=hariAda();
+  if(!ada.length){ S.kitaran="kw"; return; }
+  const hariIni=(new Date().getDay()+6)%7;
+  for(let n=0;n<7;n++){ const d=(hariIni+n)%7; if(ada.indexOf(d)>=0){ S.kitaran=d; return; } }
+})();
+muatStokSetempat();
+document.getElementById("jualan").value=rm2(S.jualan);
+setMod(S.mod,true); setSusun(S.susun,true);
+lukisKitaran();
+lukis();
+
+/* ---------- perkongsian: db artifact kalau ada, jika tidak Supabase ----------
+   Supabase dicapai terus dari halaman dengan kunci anon awam. Yang menjaga
+   data ialah dasar RLS di server: setiap permintaan mesti bawa header
+   x-sheet-pin yang sepadan dengan PIN dalam jadual rahsia yang anon tidak
+   boleh baca. Kunci anon sendiri tidak membuka apa-apa. Jadual memori
+   Pijol AI Brain tiada dasar untuk anon, jadi ia kekal tertutup.             */
+const SB = { url:"https://cqokowzzgseuvhcgpktj.supabase.co", kunci:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxb2tvd3p6Z3NldXZoY2dwa3RqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NzE5MDgsImV4cCI6MjEwMjU0NzkwOH0.AjFtow8RscN0KpIrWNrHCQu-cztcjd_ojTKZyY5GTg8", jadual:"sheet_aem" };
+const K_PIN = "aem-pin", K_OUTBOX = "aem-outbox";
+let adaUbah = false, talianOk = null;
+
+function status(teks, hijau){
+  const dot=document.getElementById("dot"), txt=document.getElementById("conn-txt");
+  if(txt) txt.textContent = teks;
+  if(dot) dot.classList.toggle("on", !!hijau);
+}
+function talian(ok){
+  if(talianOk===ok) return;
+  talianOk=ok;
+  status(ok ? "Dikongsi dengan team" : "Luar talian, disimpan pada peranti", ok);
+}
+function bacaOutbox(){ try{ return JSON.parse(localStorage.getItem(K_OUTBOX)||"{}"); }catch(_){ return {}; } }
+function tulisOutbox(o){ try{ localStorage.setItem(K_OUTBOX, JSON.stringify(o)); }catch(_){} }
+function kepalaSB(pin, tambah){
+  return Object.assign({apikey:SB.kunci, Authorization:"Bearer "+SB.kunci, "x-sheet-pin":pin}, tambah||{});
+}
+async function semakPin(pin){
+  try{
+    const r = await fetch(SB.url+"/rest/v1/"+SB.jadual+"?select=id&id=eq.meta%2Fsemak", {headers:kepalaSB(pin)});
+    if(!r.ok) return "gagal";
+    return (await r.json()).length ? "ok" : "salah";
+  }catch(_){ return "luar"; }
+}
+
+/* Adaptor yang meniru bentuk db artifact, supaya kod lain tidak berubah:
+   doc(id).set / doc(id).onSnapshot / collection(nama).orderBy().limit().get()
+   Perubahan orang lain ditarik dengan tinjauan setiap 9 saat, bukan soket,
+   sebab dapur selalu bertukar antara wifi dan data mudah alih.               */
+function adaptorSB(pin){
+  const asas = SB.url+"/rest/v1/"+SB.jadual;
+  const tonton = new Map();     /* id -> {cb, cap} */
+  const capTulis = new Map();   /* id -> JSON yang kita sendiri hantar */
+  let jam = null;
+
+  async function hantar(id, badan){
+    const ob = bacaOutbox(); ob[id] = badan; tulisOutbox(ob);
+    try{
+      const r = await fetch(asas, {
+        method:"POST",
+        headers: kepalaSB(pin, {"Content-Type":"application/json",
+                                "Prefer":"resolution=merge-duplicates,return=minimal"}),
+        body: JSON.stringify([{id:id, data:badan, updated_at:new Date().toISOString()}])
+      });
+      if(!r.ok) throw 0;
+      const ob2 = bacaOutbox(); delete ob2[id]; tulisOutbox(ob2);
+      capTulis.set(id, JSON.stringify(badan));
+      talian(true);
+      return true;
+    }catch(_){ talian(false); return false; }
+  }
+
+  async function tinjau(){
+    const ob = bacaOutbox();
+    for(const id of Object.keys(ob)){ if(!(await hantar(id, ob[id]))) return; }
+    const ids = Array.from(tonton.keys());
+    if(!ids.length) return;
+    try{
+      const q = asas+"?select=id,data&id=in.("+ids.map(x=>'"'+x+'"').join(",")+")";
+      const r = await fetch(q, {headers:kepalaSB(pin)});
+      if(!r.ok) throw 0;
+      talian(true);
+      (await r.json()).forEach(b=>{
+        const t = tonton.get(b.id); if(!t) return;
+        const j = JSON.stringify(b.data);
+        if(j===capTulis.get(b.id) || j===t.cap) return;
+        t.cap = j;
+        t.cb({exists:true, data:()=>b.data});
+      });
+    }catch(_){ talian(false); }
+  }
+
+  function mula(){
+    if(jam) return;
+    jam = setInterval(tinjau, 9000);
+    document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) tinjau(); });
+    window.addEventListener("online", tinjau);
+  }
+
+  return {
+    doc(id){
+      return {
+        set: badan => hantar(id, badan),
+        onSnapshot(cb){
+          tonton.set(id, {cb:cb, cap:null});
+          mula(); tinjau();
+          return ()=>tonton.delete(id);
+        }
+      };
+    },
+    collection(nama){
+      let urut="tarikh", arah="desc", had=30;
+      const api = {
+        orderBy(f,d){ urut=f; arah=d||"asc"; return api; },
+        limit(n){ had=n; return api; },
+        async get(){
+          const q = asas+"?select=id,data&id=like."+encodeURIComponent(nama+"/*")
+                  + "&order=data->>"+encodeURIComponent(urut)+"."+arah+"&limit="+had;
+          const r = await fetch(q, {headers:kepalaSB(pin)});
+          if(!r.ok) throw new Error("gagal");
+          return {docs:(await r.json()).map(b=>({data:()=>b.data}))};
+        }
+      };
+      return api;
+    }
+  };
+}
+
+function pasangDB(){
+  talian(true);
+  DB.doc("tetapan/umum").onSnapshot(s=>{
+    if(Date.now()-tulisSendiri < 1500) return;
+    if(!s.exists) return;
+    const a=document.activeElement;
+    if(a && a.dataset && (a.dataset.buf || a.dataset.harga || a.dataset.pnama || a.id==="jualan")) return;
+    gunaTetapan(s.data());
+    document.getElementById("jualan").value=rm2(S.jualan);
+    setMod(S.mod,true); setSusun(S.susun,true);
+    lukisKitaran(); fokusKekal(lukis);
+  }, ()=>{});
+  langganStok();
+  muatMinggu();
+}
+
+async function sambungDB(pin){
+  DB = adaptorSB(pin);
+  if(adaUbah){
+    await DB.doc("tetapan/umum").set(badanTetapan());
+    await DB.doc("stok/"+kunciKitaran()).set(badanStok());
+  }
+  pasangDB();
+}
+
+/* ---- gerbang PIN ---- */
+const gate = document.getElementById("gate");
+const gatePesan = document.getElementById("gate-pesan");
+function bukaGerbang(mesej){
+  gate.hidden = false;
+  gatePesan.textContent = mesej || "";
+  setTimeout(()=>document.getElementById("gate-pin").focus(), 60);
+}
+async function cubaPin(){
+  const inp = document.getElementById("gate-pin");
+  const pin = String(inp.value||"").replace(/[^0-9]/g,"").slice(0,4);
+  if(pin.length!==4){ gatePesan.textContent = "Masukkan 4 angka."; return; }
+  gatePesan.textContent = "Menyemak...";
+  const k = await semakPin(pin);
+  if(k==="ok"){
+    try{ localStorage.setItem(K_PIN, pin); }catch(_){}
+    gate.hidden = true;
+    sambungDB(pin);
+  } else if(k==="luar"){
+    gatePesan.textContent = "Tiada internet. Cuba lagi, atau guna tanpa kongsi.";
+  } else {
+    gatePesan.textContent = "PIN salah.";
+    inp.value = ""; inp.focus();
+  }
+}
+document.getElementById("gate-hantar").onclick = cubaPin;
+document.getElementById("gate-pin").addEventListener("keydown", e=>{ if(e.key==="Enter") cubaPin(); });
+document.getElementById("gate-lepas").onclick = ()=>{
+  gate.hidden = true;
+  status("Simpan pada peranti ini sahaja", false);
+};
+
+(async ()=>{
+  try{
+    if(window.claude && typeof window.claude.use==="function") DB = await window.claude.use("db");
+  }catch(_){ DB=null; }
+  if(DB){ pasangDB(); return; }
+
+  let pin=null; try{ pin=localStorage.getItem(K_PIN); }catch(_){}
+  if(!pin){ status("Simpan pada peranti ini sahaja", false); bukaGerbang(); return; }
+
+  const k = await semakPin(pin);
+  if(k==="ok"){ sambungDB(pin); return; }
+  if(k==="luar"){
+    status("Luar talian, disimpan pada peranti", false);
+    const cuba = setInterval(async ()=>{
+      if((await semakPin(pin))!=="ok") return;
+      clearInterval(cuba);
+      sambungDB(pin);
+    }, 20000);
+    return;
+  }
+  try{ localStorage.removeItem(K_PIN); }catch(_){}
+  status("Simpan pada peranti ini sahaja", false);
+  bukaGerbang("PIN sudah bertukar. Masukkan PIN baharu.");
+})();
+</script>
