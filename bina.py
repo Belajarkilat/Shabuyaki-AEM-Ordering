@@ -72,7 +72,6 @@ sumber = io.open(ASAL, encoding="utf-8").read()
 potong = sumber.index("</style>") + len("</style>")
 kepala, badan = sumber[:potong], sumber[potong:]
 
-cap = hashlib.sha1(sumber.encode("utf-8")).hexdigest()[:8]
 
 halaman = (
     "<!doctype html>\n"
@@ -84,6 +83,7 @@ halaman = (
     '<meta name="theme-color" content="#F5F2EC" media="(prefers-color-scheme: light)">\n'
     '<meta name="description" content="Alat order dapur Shabuyaki Aeon Maluri">\n'
     '<meta name="robots" content="noindex, nofollow">\n'
+    '<link rel="icon" href="ikon-192.png" type="image/png">\n'
     '<link rel="manifest" href="manifest.webmanifest">\n'
     '<link rel="apple-touch-icon" href="ikon-180.png">\n'
     '<meta name="apple-mobile-web-app-capable" content="yes">\n'
@@ -96,6 +96,7 @@ halaman = (
     "</script>\n"
     "</body>\n</html>\n"
 )
+cap = hashlib.sha1(halaman.encode("utf-8")).hexdigest()[:8]
 io.open(os.path.join(KELUAR, "index.html"), "w", encoding="utf-8").write(halaman)
 
 manifest = """{
