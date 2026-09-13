@@ -374,7 +374,7 @@ pre.out{margin:0; padding:16px; font-family:"IBM Plex Mono",monospace; font-size
   <div class="controls-in">
     <div class="bar">
       <div class="cycles" id="cycles"></div>
-      <label class="field" title="Jangkaan jualan bersih seminggu">
+      <label class="field" title="Jangkaan jualan bersih seminggu, julat RM90,000 hingga RM180,000">
         <span>RM</span><input id="jualan" type="text" inputmode="numeric" value="180,000">
       </label>
       <button class="amaran" id="btn-purata" type="button" hidden></button>
@@ -574,6 +574,7 @@ const MILIK_LALAI = {};
 ITEM_LALAI.forEach(x=>{ MILIK_LALAI[kunci(x[0],x[1])] = x[2]; });
 
 const JUALAN_SASARAN = 180000;   // sasaran jualan seminggu, rujukan waras (purata sebenar 4 minggu: 99557)
+const JUALAN_MIN = 90000, JUALAN_MAKS = 180000;   // julat anggaran jualan seminggu yang sah
 const KADAR_PENUH = DATA.reduce((s,c)=>s+c.items.reduce((t,i)=>t+i.p*i.r,0),0);
 const PCT_ASAS = KADAR_PENUH/10;
 const SKALA_BAJET = 53/PCT_ASAS;
@@ -795,10 +796,9 @@ function lukis(){
       + '<div class="s">'+(R.gunaMingguRM/S.jualan*100).toFixed(1)+'% jualan &middot; bajet '+rm0(R.bajetMingguRM)+'</div></div>';
 
   const elAmaran=document.getElementById("btn-purata");
-  const lari = Math.abs(S.jualan-JUALAN_SASARAN)/JUALAN_SASARAN;
-  if(lari>0.4){
+  if(S.jualan<JUALAN_MIN || S.jualan>JUALAN_MAKS){
     elAmaran.hidden=false;
-    elAmaran.textContent="Jualan nampak salah. Guna sasaran RM"+rm2(JUALAN_SASARAN);
+    elAmaran.textContent="Luar julat RM90k–180k. Guna RM"+rm2(S.jualan<JUALAN_MIN?JUALAN_MIN:JUALAN_MAKS);
   }else{ elAmaran.hidden=true; }
 
   document.getElementById("note").textContent = S.kitaran==="kw"
@@ -1006,9 +1006,9 @@ document.getElementById("jualan").addEventListener("input", e=>{
 });
 document.getElementById("jualan").addEventListener("blur", e=>{ e.target.value=rm2(S.jualan); });
 document.getElementById("btn-purata").onclick=()=>{
-  S.jualan=JUALAN_SASARAN;
+  S.jualan=Math.min(JUALAN_MAKS,Math.max(JUALAN_MIN,S.jualan));
   document.getElementById("jualan").value=rm2(S.jualan);
-  lukis(); simpanTetapan(); bisik("Jualan dikembalikan kepada sasaran");
+  lukis(); simpanTetapan(); bisik("Jualan dibawa masuk ke julat RM90k–180k");
 };
 
 function setMod(m,senyap){
