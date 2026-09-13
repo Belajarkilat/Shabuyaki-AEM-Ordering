@@ -1,7 +1,7 @@
-/* Service worker Sheet Order AEM. Cap bina: fc66137d
+/* Service worker Sheet Order AEM. Cap bina: f9d67c58
    Panggilan Supabase TIDAK PERNAH disimpan cache: ia bukan GET, atau ia
    pergi ke asal lain yang tidak disenaraikan di bawah.                     */
-const CACHE = "aem-fc66137d";
+const CACHE = "aem-f9d67c58";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest",
                "./ikon-192.png", "./ikon-512.png", "./ikon-maskable-512.png", "./ikon-180.png"];
 const FON = ["https://fonts.googleapis.com", "https://fonts.gstatic.com"];

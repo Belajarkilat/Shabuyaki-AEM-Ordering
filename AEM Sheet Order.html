@@ -375,7 +375,7 @@ pre.out{margin:0; padding:16px; font-family:"IBM Plex Mono",monospace; font-size
     <div class="bar">
       <div class="cycles" id="cycles"></div>
       <label class="field" title="Jangkaan jualan bersih seminggu">
-        <span>RM</span><input id="jualan" type="text" inputmode="numeric" value="100,000">
+        <span>RM</span><input id="jualan" type="text" inputmode="numeric" value="180,000">
       </label>
       <button class="amaran" id="btn-purata" type="button" hidden></button>
       <div class="acts">
@@ -573,7 +573,7 @@ function pembekalLalai(){ return JSON.parse(JSON.stringify(PEMBEKAL_LALAI)); }
 const MILIK_LALAI = {};
 ITEM_LALAI.forEach(x=>{ MILIK_LALAI[kunci(x[0],x[1])] = x[2]; });
 
-const JUALAN_PURATA = 99557;   // purata 4 minggu terakhir, rujukan waras
+const JUALAN_SASARAN = 180000;   // sasaran jualan seminggu, rujukan waras (purata sebenar 4 minggu: 99557)
 const KADAR_PENUH = DATA.reduce((s,c)=>s+c.items.reduce((t,i)=>t+i.p*i.r,0),0);
 const PCT_ASAS = KADAR_PENUH/10;
 const SKALA_BAJET = 53/PCT_ASAS;
@@ -587,7 +587,7 @@ const bilAsas = {};
 DATA.forEach(c=>c.items.forEach(i=>{const a=c.k+"/"+asas(i.n); bilAsas[a]=(bilAsas[a]||0)+1;}));
 
 const S = {
-  kitaran:4, jualan:100000, mod:"guna", susun:"pembekal", tunjukPemb:false, fokus:null,
+  kitaran:4, jualan:180000, mod:"guna", susun:"pembekal", tunjukPemb:false, fokus:null,
   buffer:Object.assign({},BUFFER_LALAI),
   pembekal:pembekalLalai(),
   milik:{},          // kunci item -> id pembekal
@@ -795,10 +795,10 @@ function lukis(){
       + '<div class="s">'+(R.gunaMingguRM/S.jualan*100).toFixed(1)+'% jualan &middot; bajet '+rm0(R.bajetMingguRM)+'</div></div>';
 
   const elAmaran=document.getElementById("btn-purata");
-  const lari = Math.abs(S.jualan-JUALAN_PURATA)/JUALAN_PURATA;
+  const lari = Math.abs(S.jualan-JUALAN_SASARAN)/JUALAN_SASARAN;
   if(lari>0.4){
     elAmaran.hidden=false;
-    elAmaran.textContent="Jualan nampak salah. Guna purata RM"+rm2(JUALAN_PURATA);
+    elAmaran.textContent="Jualan nampak salah. Guna sasaran RM"+rm2(JUALAN_SASARAN);
   }else{ elAmaran.hidden=true; }
 
   document.getElementById("note").textContent = S.kitaran==="kw"
@@ -1006,9 +1006,9 @@ document.getElementById("jualan").addEventListener("input", e=>{
 });
 document.getElementById("jualan").addEventListener("blur", e=>{ e.target.value=rm2(S.jualan); });
 document.getElementById("btn-purata").onclick=()=>{
-  S.jualan=JUALAN_PURATA;
+  S.jualan=JUALAN_SASARAN;
   document.getElementById("jualan").value=rm2(S.jualan);
-  lukis(); simpanTetapan(); bisik("Jualan dikembalikan kepada purata");
+  lukis(); simpanTetapan(); bisik("Jualan dikembalikan kepada sasaran");
 };
 
 function setMod(m,senyap){
